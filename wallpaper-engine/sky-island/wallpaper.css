@@ -1,0 +1,9 @@
+body,button,select{font-family:Georgia,"Palatino Linotype","Noto Serif CJK SC","Source Han Serif SC","Songti SC",SimSun,serif!important}
+header h1{font-weight:400;letter-spacing:.09em}
+.system-time{display:block!important;position:fixed;left:auto!important;right:clamp(24px,4vw,80px);bottom:clamp(24px,4vh,64px)!important;text-align:right;pointer-events:none;z-index:5;color:#344a42;text-shadow:0 1px 12px #ffffff65;line-height:1.25}
+#system-clock{font-size:clamp(30px,4vw,64px);font-weight:400;letter-spacing:.045em;font-variant-numeric:tabular-nums}
+#system-date{font-size:clamp(11px,1vw,16px);margin-top:9px;letter-spacing:.16em;opacity:.8}
+body.night .system-time{color:#e4e9df;text-shadow:0 2px 14px #0009}
+#debug-toggle{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:20;background:#fffdf2dd;font-size:12px;padding:8px 14px}
+body.wallpaper-clean> :not(#world):not(.system-time):not(script){display:none!important}
+body:not(.wallpaper-clean) .system-time{bottom:110px!important}

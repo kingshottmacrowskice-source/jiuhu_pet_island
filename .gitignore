@@ -1,0 +1,19 @@
+# 依赖
+node_modules/
+.npm/
+.pnpm-store/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+.idea/
+.vscode/
+
+# 日志与临时产物
+*.log
+npm-debug.log*
+.cache/
+tmp/
+temp/
