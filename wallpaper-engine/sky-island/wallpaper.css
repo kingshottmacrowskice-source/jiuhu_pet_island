@@ -7,3 +7,7 @@ body.night .system-time{color:#e4e9df;text-shadow:0 2px 14px #0009}
 #debug-toggle{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:20;background:#fffdf2dd;font-size:12px;padding:8px 14px}
 body.wallpaper-clean> :not(#world):not(.system-time):not(script){display:none!important}
 body:not(.wallpaper-clean) .system-time{bottom:110px!important}
+
+#island-switch{display:block!important;position:fixed;right:24px;top:20px;z-index:30;background:#fff8eeec;border:1px solid #ffffffb0;border-radius:24px;padding:11px 18px;color:#655978;box-shadow:0 4px 20px #53436518;font-size:12px;letter-spacing:.06em}body.wallpaper-clean>#island-switch{display:block!important}body.night #island-switch{background:#34324ee6;color:#f5e8f0}@media(max-width:720px){#island-switch{top:12px;right:12px;padding:9px 12px;font-size:11px}body:not(.wallpaper-clean) #island-switch{top:86px}}
+
+body.wallpaper-clean>button#island-switch:not(.hidden){display:block!important}

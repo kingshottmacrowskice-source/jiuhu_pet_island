@@ -1,4 +1,5 @@
 import * as T from './vendor/three.module.js';
+import {updateSun} from './island-sun.js';
 
 // Original Three.js lighting; no Minecraft shader-pack code or assets are used.
 export function createAtmosphere({scene,renderer,sun,ambient,waterMat}) {
@@ -6,8 +7,7 @@ export function createAtmosphere({scene,renderer,sun,ambient,waterMat}) {
   const original={position:sun.position.clone(),exposure:renderer.toneMappingExposure,
     map:waterMat.map,roughness:waterMat.roughness,color:waterMat.color.clone(),ambient:ambient.color.clone(),ground:ambient.groundColor.clone()};
   const fog=new T.FogExp2(scene.background.clone(),.008);
-  const warm=new T.Color('#ffd09a'),noon=new T.Color('#fff0da'),moon=new T.Color('#b5ceff');
-  const daySky=new T.Color('#c7dfea'),duskSky=new T.Color('#e6bfab'),nightSky=new T.Color('#111f36');
+  const warm=new T.Color('#ffaa55'),noon=new T.Color('#fff8f0'),moon=new T.Color('#c5d8ff'),duskSky=new T.Color('#ffa066');
   // Seamless, low amplitude wave normals, generated locally rather than copied from the pack.
   const size=128,data=new Uint8Array(size*size*4);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++) {
@@ -28,21 +28,19 @@ export function createAtmosphere({scene,renderer,sun,ambient,waterMat}) {
   function update(state) {
     if(!enabled)return;
     const elevation=Math.sin((state.hour-6)/12*Math.PI);
-    const daylight=T.MathUtils.smoothstep(elevation,-.08,.35);
+    const daylight=state.daylight;
     const dusk=(1-T.MathUtils.smoothstep(elevation,.08,.7))*daylight;
     const overcast=state.weather!=='clear';
-    ambient.color.set('#bad7f5');ambient.groundColor.set('#927554');
-    ambient.intensity=.52+daylight*(overcast?1.05:.95);
-    sun.intensity=.2+daylight*(overcast?.85:3.5);
-    sun.color.copy(moon).lerp(noon,daylight).lerp(warm,dusk*.85);
-    // The moon uses the same shadow light at night. Its orbit remains above the island.
-    const angle=(state.hour-6)/12*Math.PI;
-    sun.position.set(-Math.cos(angle)*18,12+Math.abs(Math.sin(angle))*16,12);
-    scene.background.copy(nightSky).lerp(daySky,daylight).lerp(duskSky,dusk*.45);
-    if(overcast)scene.background.lerp(new T.Color('#8ea6b5'),daylight*.5);
-    fog.color.copy(scene.background);fog.density=state.weather==='rain'?.015:state.weather==='snow'?.018:.007;
-    renderer.toneMappingExposure=1.02+(1-daylight)*.12;
-    waterMat.roughness=overcast?.32:.22;waterMat.color.set('#60afbb');
+    ambient.color.set('#bad7f5');ambient.groundColor.set('#7c654c');
+    ambient.intensity=.5+daylight*(overcast?1.35:1.45);
+    updateSun(sun,state);
+    // Fog: denser at dusk/night for depth, thinner during the day for clarity.
+    const fogBase=scene.background.clone();
+    if(dusk>.3)fogBase.lerp(duskSky,dusk*.4);
+    fog.color.copy(fogBase);
+    fog.density=state.weather==='rain'?.014:state.weather==='snow'?.016:daylight>.5?.005:.009;
+    renderer.toneMappingExposure=1.08+(1-daylight)*.15;
+    waterMat.roughness=overcast?.32:daylight>.5?.18:.25;waterMat.color.set('#60afbb');
     waves.offset.set(state.elapsed*.012,state.elapsed*.007);
   }
   return {update,setEnabled,get enabled(){return enabled;}};

@@ -24,7 +24,7 @@ server.on('error', async error => {
   if (error.code === 'EADDRINUSE') {
     try {
       const response = await fetch(url, { signal: AbortSignal.timeout(3000) });
-      if (response.ok && (await response.text()).includes('src="material-preview.js"')) {
+      if (response.ok && (await response.text()).includes('云上小日子')) {
         console.log('Island is already running: ' + url);
         openIsland();
         return;

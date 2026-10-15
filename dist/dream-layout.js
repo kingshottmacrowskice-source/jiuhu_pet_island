@@ -1,0 +1,8 @@
+export const hills=[[-8,-4,2.8,4.1,7],[8,-6,4.8,3.3,6], [10,7,1.7,2.8,5]];
+const smooth=t=>{t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);};
+export function heightAt(x,z){x=Math.floor(x)+.5;z=Math.floor(z)+.5;return .25+Math.round(hills.reduce((h,[a,b,y,inner,outer])=>h+y*(1-smooth((Math.hypot(x-a,z-b)-inner)/(outer-inner))),0)*2)/2;}
+export const insideHouse=p=>p.x>-10.3&&p.x<-5.7&&p.z>-6.2&&p.z<-2;
+const points={home:[-6,-.2],hub:[-4,1],west:[-7,2],wheatEntry:[-10,3],wheat:[-11,4],firePath:[-2,4],fire:[-1.4,5],north:[-.5,1],pond:[2,3.3],turn:[0,-1],treePath:[1,-4],tree:[1,-5],step:[-7,-1],porch:[-7,-1.5],door:[-7,-2.1],inside:[-7,-3],cook:[-6.6,-4.8],bedPath:[-8,-3],bedFoot:[-9,-3],sleep:[-9,-4.5],eat:[-8.6,-1.4],sweep:[-7,-1.4],shelter:[-6.5,-1.5],south:[-5,6],gardenTurn:[-8,7],gardenCorner:[-10,7],gardenApproach:[-11,7],garden:[-11,6],gardenNorth:[-13,1],shedPath:[-13,-3],millPath:[-12,-7],bridgeApproach:[4,-3],bridgeWest:[5,-4],bridgeCenter:[6,-5],bridgeEast:[7,-5],orchard:[8,-4],southEast:[1,8],wellPath:[5,9],lookoutEntry:[9,9],lookout:[10,8]};
+export const dreamNodes=Object.fromEntries(Object.entries(points).map(([key,[x,z]])=>[key,[x,heightAt(x,z)+.13,z]]));
+dreamNodes.sleep[1]+=.65;
+export function makeRouteFinder(edges){return (from,to)=>{const queue=[from],previous=new Map([[from,null]]);for(let i=0;i<queue.length;i++){const at=queue[i];if(at===to)break;for(const [a,b]of edges){const next=a===at?b:b===at?a:null;if(next&&!previous.has(next)){previous.set(next,at);queue.push(next);}}}if(!previous.has(to))throw Error('No dream island route');const path=[];for(let at=to;at!==from;at=previous.get(at))path.unshift(at);return path;};}

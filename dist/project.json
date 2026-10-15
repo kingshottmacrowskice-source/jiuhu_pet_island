@@ -10,7 +10,7 @@
       "debug": {
         "text": "Debug 模式 · 显示控制面板",
         "type": "bool",
-        "value": false,
+        "value": true,
         "order": 0,
         "index": 0
       },

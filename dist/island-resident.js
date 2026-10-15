@@ -2,7 +2,8 @@ import * as T from './vendor/three.module.js';
 import {loadSprites} from './sprites.js';
 import {nodes,findRoute,chooseActivity,sweepTargets} from './life-routes.js';
 import {facingRight} from './resident-facing.js';
-export async function addResident({island,focusOn,getWorld,spriteLoader=loadSprites}){
+export async function addResident({island,focusOn,getWorld,spriteLoader=loadSprites,routeNodes=nodes,routeFinder=findRoute,groundHeight=null,insideTest=null,gazeTargets={fire:[0,3.45],pond:[3,2]}}){
+ const nodes=routeNodes,findRoute=routeFinder;
  const sprites=await spriteLoader();
  const sprite=new T.Sprite(new T.SpriteMaterial({map:sprites.clips[0][0],transparent:true,alphaTest:.5,depthWrite:false}));
  sprite.name='jiuhu-resident';sprite.center.set(.5,4/64);sprite.scale.set(1.55,1.78,1);sprite.position.set(...nodes.home);island.add(sprite);
@@ -15,8 +16,7 @@ export async function addResident({island,focusOn,getWorld,spriteLoader=loadSpri
  const heading=new T.Vector3(-1,0,0),cameraRight=new T.Vector3();
  const mirrored=new Map();let facing=false,frame=sprites.clips[0][0];
  function updateFacing(camera){
-  if(!route.length&&current==='fire')heading.set(-sprite.position.x,0,3.45-sprite.position.z);
-  if(!route.length&&current==='pond')heading.set(3-sprite.position.x,0,2-sprite.position.z);
+  if(!route.length&&gazeTargets[current])heading.set(gazeTargets[current][0]-sprite.position.x,0,gazeTargets[current][1]-sprite.position.z);
   cameraRight.setFromMatrixColumn(camera.matrixWorld,0);
   facing=facingRight(heading,cameraRight,facing);
   // Fishing artwork holds the rod to the right; walking/warming artwork faces left.
@@ -51,16 +51,17 @@ export async function addResident({island,focusOn,getWorld,spriteLoader=loadSpri
   if(moving&&dt>0){
    let travel=dt*1.15;
    while(route.length&&travel>0){
-    const target=new T.Vector3(...nodes[route[0]]),distance=sprite.position.distanceTo(target),step=Math.min(travel,distance);phase+=step*7;travel-=step;
+    const target=new T.Vector3(...nodes[route[0]]),distance=groundHeight?Math.hypot(sprite.position.x-target.x,sprite.position.z-target.z):sprite.position.distanceTo(target),step=Math.min(travel,distance);phase+=step*7;travel-=step;
     if(step>0){heading.copy(target).sub(sprite.position);heading.y=0;}
     if(distance<=step+.00001){sprite.position.copy(target);anchor=route.shift();}else sprite.position.lerp(target,step/distance);
    }
    if(!route.length){dwell=0;phase=0;status.textContent=activities[current][1];}
   }else if(!moving){dwell+=dt;phase+=dt*(current==='sweep'?5:current==='sleep'?1.2:2);}
+  if(groundHeight)sprite.position.y=groundHeight(sprite.position.x,sprite.position.z,sprite.position.y);
   const key=route.length?'walk':activities[current][0],clip=sprites.clips[key]||sprites.clips[0];
   frame=clip[Math.floor(phase)%clip.length];sprite.material.map=frame;sprite.scale.set(key==='walk'?1.48:current==='sleep'?1.7:1.55,key==='walk'?1.70:current==='sleep'?1.55:1.78,1);
   sprite.material.color.set(world.night?0xb8c6d8:0xffffff);shadow.position.set(sprite.position.x,sprite.position.y-.015,sprite.position.z);shadow.visible=!(current==='sleep'&&!route.length);
  }
  status.textContent=activities.home[1];update(0);
- return {sprite,request,focus,update,updateFacing,getState:()=>({activity:current,destination,sweepStops,facingRight:facing,heading:heading.toArray(),manual,moving:!!route.length,route:[...route],position:sprite.position.toArray()}),isInside:()=>sprite.position.z<-.5&&sprite.position.z>-4&&sprite.position.x>-4.2&&sprite.position.x<.2};
+ return {sprite,request,focus,update,updateFacing,getState:()=>({activity:current,destination,sweepStops,facingRight:facing,heading:heading.toArray(),manual,moving:!!route.length,route:[...route],position:sprite.position.toArray()}),isInside:()=>insideTest?insideTest(sprite.position):sprite.position.z<-.5&&sprite.position.z>-4&&sprite.position.x>-4.2&&sprite.position.x<.2};
 }
