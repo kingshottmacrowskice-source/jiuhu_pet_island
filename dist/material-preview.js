@@ -8,7 +8,9 @@ import { createAtmosphere } from './island-atmosphere.js';
 import {vanillaNames,mossGround,addMeadow} from './island-meadow.js';
 import {createPostFX} from './island-postfx.js';
 import {zones,heightAt,classicNodes,findClassicRoute,walkHeight,insideHouse} from './classic-layout.js';
-import {buildClassicTerrain,addClassicPaths} from './classic-terrain.js';
+import {buildClassicTerrain} from './classic-terrain.js';
+import {completeRoadTextures} from './classic-road-materials.js';
+import {propOffset,residentNodes,findResidentRoute,insideMovedHouse} from './classic-props.js';
 
 // Expanded pixel-block island with shallow terraces and recessed paths.
 const canvas = document.getElementById('world');
@@ -46,7 +48,7 @@ island.add(shell);
 const grounds=new Map();let placement=island;
 function setZone(name){
   if(!name){placement=island;return island;}
-  if(!grounds.has(name)){const group=new T.Group();group.name='classic-area-'+name;group.position.set(...zones[name].offset);island.add(group);grounds.set(name,group);}
+  if(!grounds.has(name)){const group=new T.Group();group.name='classic-area-'+name;group.position.set(...propOffset(name));island.add(group);grounds.set(name,group);}
   placement=grounds.get(name);return placement;
 }
 setZone('home').add(shell);setZone(null);
@@ -54,9 +56,10 @@ const meshes = [], lamps = [], plants = [];
 const animated = [];
 const maps = {}, materials = new Map(), flatMaterials = new Map();
 const textureFiles = {"red_tulip":"textures-vanilla/red_tulip.png","orange_tulip":"textures-vanilla/orange_tulip.png","peony_top":"textures-vanilla/peony_top.png","stone_bricks":"textures-pixlli/stone_bricks.png","oak_leaves":"textures-pixlli/oak_leaves.png","oak_log_top":"textures-pixlli/oak_log_top.png","stone":"textures-pixlli/stone.png","dirt":"textures-pixlli/dirt.png","vine":"textures-hd/vine.png","cobblestone":"textures-pixlli/cobblestone.png","cornflower":"textures-vanilla/cornflower.png","grass_block_side":"textures-pixlli/grass_block_side.png","sunflower_top":"textures-vanilla/sunflower_top.png","large_fern_bottom":"textures-vanilla/large_fern_bottom.png","large_fern_top":"textures-vanilla/large_fern_top.png","grass_block_top":"textures-pixlli/grass_block_top.png","water_still":"textures-hd/water_still.png","oak_log":"textures-pixlli/oak_log.png","oxeye_daisy":"textures-vanilla/oxeye_daisy.png","wheat_stage_7":"textures-hd/wheat_stage_7.png","poppy":"textures-vanilla/poppy.png","pink_tulip":"textures-vanilla/pink_tulip.png","blue_orchid":"textures-vanilla/blue_orchid.png","rose_bush_bottom":"textures-vanilla/rose_bush_bottom.png","fern":"textures-vanilla/fern.png","peony_bottom":"textures-vanilla/peony_bottom.png","grass_block_side_overlay":"textures-pixlli/grass_block_side_overlay.png","tall_grass_top":"textures-pixlli/tall_grass_top.png","azure_bluet":"textures-vanilla/azure_bluet.png","short_grass":"textures-pixlli/short_grass.png","sunflower_bottom":"textures-vanilla/sunflower_bottom.png","moss_block":"textures-pixlli/moss_block.png","rose_bush_top":"textures-vanilla/rose_bush_top.png","tall_grass_bottom":"textures-pixlli/tall_grass_bottom.png","lilac_top":"textures-vanilla/lilac_top.png","lily_of_the_valley":"textures-vanilla/lily_of_the_valley.png","sunflower_front":"textures-vanilla/sunflower_front.png","white_tulip":"textures-vanilla/white_tulip.png","cobblestone_mossy":"textures-pixlli/cobblestone_mossy.png","spruce_planks":"textures-pixlli/spruce_planks.png","allium":"textures-vanilla/allium.png","lilac_bottom":"textures-vanilla/lilac_bottom.png","oak_planks":"textures-pixlli/oak_planks.png","dandelion":"textures-vanilla/dandelion.png","sunflower_back":"textures-vanilla/sunflower_back.png"};
+textureFiles.mossy_stone_bricks='textures-pixlli/mossy_stone_bricks.png';
 const names = ['oak_planks','spruce_planks','oak_log','oak_log_top','grass_block_top',
   'grass_block_side','grass_block_side_overlay','dirt','stone','cobblestone',
-  'cobblestone_mossy','stone_bricks','oak_leaves','vine','wheat_stage_7','water_still'];
+  'cobblestone_mossy','stone_bricks','mossy_stone_bricks','oak_leaves','vine','wheat_stage_7','water_still'];
 let useTextures = true, isNight = false;
 let atmosphere=null,postFX=null;
 let life=null,resident=null,manualRoof=false,following=false,lastFrame=null;
@@ -120,6 +123,8 @@ async function build() {
     texture.wrapS=texture.wrapT=T.RepeatWrapping;
     maps[name]=texture;
   }));
+  completeRoadTextures(maps);
+  const roadMaterials=['stone','stone_bricks','cobblestone_mossy','cobblestone','mossy_stone_bricks','cracked_stone_bricks','andesite'].map(name=>material(name));
   const dirt=material('dirt'), stone=material('stone'), brick=material('stone_bricks');
   const wood=material('oak_planks'), roof=material('spruce_planks');
   const log=material('oak_log'), end=material('oak_log_top');
@@ -128,7 +133,7 @@ async function build() {
   const moss=material('cobblestone_mossy'), leaf=material('oak_leaves',0x6f9547,true);
 
   const groundTop=mossGround(maps);
-  const terrain=buildClassicTerrain({island,grass:grassTop,grassSide,groundTop,dirt,stone,moss,flat,meshes});
+  const terrain=buildClassicTerrain({island,grass:grassTop,grassSide,groundTop,dirt,stone,moss,flat,meshes,roadMaterials});
   // Cottage with an openable exterior and a furnished interior.
   setZone('home');
   box(-2,.14,-2.35,4.4,.28,3.6,brick,0x919487);
@@ -233,8 +238,7 @@ async function build() {
     const spark=box(0,.5,3.45,.025,.045,.025,sparkMat,0xffbd58);spark.userData.dynamic=true;spark.castShadow=false;
     animated.push(t=>{const phase=(t*.48+i/6)%1;spark.position.set(Math.sin(t*2+i)*phase*.25,.4+phase*1.1,3.45+Math.cos(t+i)*phase*.16);spark.scale.setScalar(1-phase);});
   }
-  box(0,.48,4.65,1.5,.2,.45,wood,0x9e7543);
-  for(const x of [-.55,.55])box(x,.22,4.65,.13,.35,.36,logFaces,0x795833);
+  // The bench beside the campfire has been removed.
   function lantern(x,y,z){
     const metal=flat(0x424939);
     box(x,y,z,.19,.27,.19,glow,0xffd478);
@@ -253,7 +257,7 @@ async function build() {
     for(let n=0;n<3;n++)plant(x,-.45-n*.7,z,.8,'vine',0x648b39);
   }
   enrichIsland({T,island,box,flat,material,plant,wood,roof,logFaces,stone,brick,moss,leaf,dirt,waterMat,lantern,animated,setZone,heightAt});
-  setZone(null);addClassicPaths({box,brick});
+  setZone(null);
   const meadow=addMeadow({island,maps,plants});
   // Batch repeated static boxes to keep the larger scene inexpensive to draw.
   const logicalMeshCount=meshes.length;
@@ -275,8 +279,8 @@ async function build() {
   }
   for(let i=meshes.length-1;i>=0;i--)if(!meshes[i].parent)meshes.splice(i,1);
   const wind=addPlantWind(island);animated.push(t=>wind.update(t));
-  life=createLife({scene,ambient,sun,lamps,weatherBounds:[38,32],rainFloor:(x,z)=>heightAt(x,z)+(insideHouse({x,z})?4.8:x>-12.6&&x<-9.4&&z>-4&&z<-1.35?2.5:.05),onNight:value=>{isNight=value;}});
-  resident=await addResident({island,getWorld:()=>life.state,routeNodes:classicNodes,routeFinder:findClassicRoute,groundHeight:walkHeight,insideTest:insideHouse,gazeTargets:{fire:[0,5.45],pond:[6,2.3]},focusOn:(position,place)=>{
+  life=createLife({scene,ambient,sun,lamps,weatherBounds:[38,32],rainFloor:(x,z)=>heightAt(x,z)+(insideMovedHouse({x,z})?4.8:x>-12.6&&x<-9.4&&z>-4&&z<-1.35?2.5:.05),onNight:value=>{isNight=value;}});
+  resident=await addResident({island,getWorld:()=>life.state,routeNodes:residentNodes,routeFinder:findResidentRoute,groundHeight:walkHeight,insideTest:insideMovedHouse,gazeTargets:{fire:[propOffset('fire')[0],propOffset('fire')[2]+3.45],pond:[6,2.3],garden:[-12,3]},focusOn:(position,place)=>{
     if(wallpaperCamera.locked)return;
     setFollowing(!following);
     if(!following)return;

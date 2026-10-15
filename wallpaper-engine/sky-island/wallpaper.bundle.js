@@ -1,13 +1,8 @@
 (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropNames = Object.getOwnPropertyNames;
-  var __esm = (fn, res, err) => function __init() {
-    if (err) throw err[0];
-    try {
-      return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
-    } catch (e) {
-      throw err = [e], e;
-    }
+  var __esm = (fn, res) => function __init() {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
   };
   var __export = (target, all) => {
     for (var name in all)
@@ -31610,8 +31605,7 @@ void main() {
     return target.set(-Math.cos(angle), Math.sin(angle) * 0.8, -Math.sin(angle) * 0.6).normalize();
   }
   function updateSun(sun3, state) {
-    var _a;
-    const direction = (_a = sun3.userData).solarDirection || (_a.solarDirection = new Vector3());
+    const direction = sun3.userData.solarDirection ||= new Vector3();
     sunDirection(state.hour, direction);
     const direct = MathUtils.smoothstep(direction.y, 0, 0.12);
     sun3.userData.solarVisibility = direct;
@@ -33265,11 +33259,10 @@ void main() {
     let count = 0;
     island3.updateMatrixWorld(true);
     island3.traverse((mesh) => {
-      var _a, _b;
       if (!mesh.isMesh) return;
       const material2 = mesh.material;
       if (Array.isArray(material2)) return;
-      const source = ((_b = (_a = material2.map) == null ? void 0 : _a.image) == null ? void 0 : _b.src) || "";
+      const source = material2.map?.image?.src || "";
       const meadow = mesh.name.startsWith("meadow-");
       const leaves = source.includes("oak_leaves");
       const wheat = source.includes("wheat_stage");
@@ -33286,7 +33279,7 @@ void main() {
         } else matrix.copy(mesh.matrixWorld);
         origin.setFromMatrixPosition(matrix);
         const spec = mesh.userData.wind;
-        let root = (spec == null ? void 0 : spec.root) ?? 0, amplitude = (spec == null ? void 0 : spec.amplitude) ?? 0.055, height = (spec == null ? void 0 : spec.height) ?? (leaves ? 4 : 1);
+        let root = spec?.root ?? 0, amplitude = spec?.amplitude ?? 0.055, height = spec?.height ?? (leaves ? 4 : 1);
         if (meadow || wheat) {
           geometry.computeBoundingBox();
           root = new Vector3(0, geometry.boundingBox.min.y, 0).applyMatrix4(matrix).y;
@@ -33398,13 +33391,13 @@ void main() {
     for (let at = to; at !== from; at = previous.get(at)) path.unshift(at);
     return path;
   }
-  function isRoad(x, z) {
+  function isRoad(x, z, width = roadWidth) {
     [x, z] = cellCenter(x, z);
     if (isWater(x, z) || x > 3.5 && x < 4.8 && z > 1.2 && z < 2.8) return false;
     if (x > 8.85 && x < 12.4 && z > 6.5 && z < 9.5 || x > -5.7 && x < -1.3 && z < 0.25 && z > -5.5) return false;
     return roadEdges.some(([a, b]) => {
       const p = classicNodes[a], q = classicNodes[b], dx = q[0] - p[0], dz = q[2] - p[2], t = Math.max(0, Math.min(1, ((x - p[0]) * dx + (z - p[2]) * dz) / (dx * dx + dz * dz || 1)));
-      return Math.hypot(x - p[0] - t * dx, z - p[2] - t * dz) < 0.5;
+      return Math.hypot(x - p[0] - t * dx, z - p[2] - t * dz) < width / 2;
     });
   }
   function heightAt2(x, z) {
@@ -33426,11 +33419,11 @@ void main() {
     for (const { offset: [dx, , dz], bounds: [a, b, c, d] } of Object.values(zones)) if (x > a + dx - 0.35 && x < b + dx + 0.35 && z > c + dz - 0.35 && z < d + dz + 0.35) return false;
     for (const [a, b] of edges) {
       const p = classicNodes[a], q = classicNodes[b], dx = q[0] - p[0], dz = q[2] - p[2], t = Math.max(0, Math.min(1, ((x - p[0]) * dx + (z - p[2]) * dz) / (dx * dx + dz * dz || 1)));
-      if (Math.hypot(x - p[0] - t * dx, z - p[2] - t * dz) < 0.7) return false;
+      if (Math.hypot(x - p[0] - t * dx, z - p[2] - t * dz) < roadWidth / 2 + 0.2) return false;
     }
     return true;
   }
-  var zones, smooth2, cellSize, terraceStep, roadDepth, heightCache, streamCells, nodeZones, classicNodes, indoorNodes, bridgeNodes, roadEdges, nodeLifts, insideHouse2;
+  var zones, smooth2, cellSize, terraceStep, roadDepth, roadWidth, heightCache, streamCells, nodeZones, classicNodes, indoorNodes, bridgeNodes, roadEdges, nodeLifts, insideHouse2;
   var init_classic_layout = __esm({
     "dist/classic-layout.js"() {
       init_life_routes();
@@ -33454,6 +33447,7 @@ void main() {
       cellSize = 0.5;
       terraceStep = 0.25;
       roadDepth = 0.125;
+      roadWidth = 1.5;
       heightCache = /* @__PURE__ */ new Map();
       streamCells = /* @__PURE__ */ new Set(["5,1", "5,0", "6,0", "6,-1", "6,-2", "6,-3", "5,-3", "5,-4", "5,-5", "5,-6", "5,-7", "5,-8", "5,-9", "5,-10", "5,-11", "5,-12"]);
       nodeZones = { home: "home", hub: "home", west: "home", wheatEntry: "wheat", wheat: "wheat", firePath: "fire", fire: "fire", north: "home", pond: "pond", turn: "tree", treePath: "tree", tree: "tree", step: "home", porch: "home", door: "home", inside: "home", cook: "home", bedPath: "home", bedFoot: "home", sleep: "home", eat: "home", sweep: "home", shelter: "home", south: "fire", gardenTurn: "wheat", gardenCorner: "garden", gardenApproach: "garden", garden: "garden", gardenNorth: "garden", shedPath: "shed", millPath: "mill", bridgeApproach: "pond", bridgeWest: "pond", bridgeCenter: "pond", bridgeEast: "pond", orchard: "pond", southEast: "fire", wellPath: "well", lookoutEntry: "lookout", lookout: "lookout" };
@@ -33465,6 +33459,41 @@ void main() {
       for (const [name, p] of Object.entries(classicNodes)) if (!indoorNodes.has(name) && !bridgeNodes.has(name) && !["pond", "lookout", "lookoutEntry"].includes(name)) p[1] = heightAt2(p[0], p[2]) + 0.07;
       nodeLifts = Object.fromEntries(Object.entries(classicNodes).map(([key, p]) => [key, p[1] - heightAt2(p[0], p[2])]));
       insideHouse2 = (p) => p.x > -5.7 && p.x < -1.3 && p.z > -5.5 && p.z < -2;
+    }
+  });
+
+  // dist/classic-props.js
+  function propOffset(name) {
+    return zones[name].offset.map((v, i) => v + (propShifts[name]?.[i] || 0));
+  }
+  function overlapsRoad(x, z, w, d) {
+    const a = x - w / 2, b = x + w / 2, c = z - d / 2, e = z + d / 2;
+    for (let i = Math.floor(a / cellSize); i <= Math.floor(b / cellSize); i++) for (let j = Math.floor((c - 0.3) / cellSize); j <= Math.floor((e - 0.3) / cellSize); j++) {
+      const px2 = (i + 0.5) * cellSize, pz2 = (j + 0.5) * cellSize + 0.3;
+      if (px2 + cellSize / 2 > a + 1e-6 && px2 - cellSize / 2 < b - 1e-6 && pz2 + cellSize / 2 > c + 1e-6 && pz2 - cellSize / 2 < e - 1e-6 && isRoad(px2, pz2)) return true;
+    }
+    return false;
+  }
+  function roadsideLamp(name) {
+    const [nx, , nz] = classicNodes[name], x = nx - 0.8, z = nz;
+    for (let r = 0; r <= 3; r += 0.25) for (let n = 0; n < (r ? 16 : 1); n++) {
+      const a = n * Math.PI / 8, px2 = x + Math.cos(a) * r, pz2 = z + Math.sin(a) * r;
+      if (!inIsland(px2, pz2, 1) || isWater(px2, pz2) || overlapsRoad(px2, pz2, 0.6, 0.6)) continue;
+      if (Object.keys(zones).some((key) => {
+        const [dx, , dz] = propOffset(key), [a2, b, c, d] = zones[key].bounds;
+        return px2 + 0.3 > a2 + dx && px2 - 0.3 < b + dx && pz2 + 0.3 > c + dz && pz2 - 0.3 < d + dz;
+      })) continue;
+      return [px2, heightAt2(px2, pz2), pz2];
+    }
+    throw Error("No clear roadside lamp position: " + name);
+  }
+  var propShifts, residentNodes, insideMovedHouse;
+  var init_classic_props = __esm({
+    "dist/classic-props.js"() {
+      init_classic_layout();
+      propShifts = { home: [0, 0, -0.5], garden: [-1, 0, 0], fire: [1, 0, 0] };
+      residentNodes = Object.fromEntries(Object.entries(classicNodes).map(([name, p]) => [name, p.map((v, i) => v + (indoorNodes.has(name) ? propShifts.home[i] : 0))]));
+      insideMovedHouse = (p) => insideHouse2({ x: p.x - propShifts.home[0], z: p.z - propShifts.home[2] });
     }
   });
 
@@ -33643,11 +33672,8 @@ void main() {
     setZone2("fire");
     for (let i = 0; i < 10; i++) {
       const a = i * Math.PI / 5;
-      B(0.1 + Math.cos(a) * 1.35, 0.025, 3.6 + Math.sin(a) * 1.1, 0.5, 0.05, 0.38, dirt, 10784355);
-    }
-    for (const [x, z] of [[-2, 6.2], [1.6, 6.6]]) {
-      B(x, 0.48, z, 1.2, 0.17, 0.38);
-      for (const dx of [-0.45, 0.45]) B(x + dx, 0.24, z, 0.1, 0.4, 0.32, logFaces, 7887669);
+      const x = 0.1 + Math.cos(a) * 1.35, z = 3.6 + Math.sin(a) * 1.1, [dx, , dz] = propOffset("fire");
+      if (!overlapsRoad(x + dx, z + dz, 0.5, 0.38)) B(x, 0.025, z, 0.5, 0.05, 0.38, dirt, 10784355);
     }
     const wellX = 3.1, wellZ = 6.2;
     setZone2("well");
@@ -33668,9 +33694,9 @@ void main() {
       for (const child of [...island3.children]) if (!before.has(child)) group.add(child);
     }
     for (const name of ["gardenNorth", "gardenTurn", "southEast", "orchard", "millPath"]) {
-      const [x, , z] = classicNodes[name], y = heightAt3(x - 0.8, z);
-      B(x - 0.8, y + 0.64, z, 0.12, 1.28, 0.12, logFaces, 7821876);
-      lantern(x - 0.8, y + 1.5, z);
+      const [x, y, z] = roadsideLamp(name);
+      B(x, y + 0.64, z, 0.12, 1.28, 0.12, logFaces, 7821876);
+      lantern(x, y + 1.5, z);
     }
     setZone2("home");
     B(-2.85, 1.2, -0.36, 1.7, 0.2, 0.3, wood, 10780752);
@@ -33699,6 +33725,7 @@ void main() {
   var init_island_details = __esm({
     "dist/island-details.js"() {
       init_classic_layout();
+      init_classic_props();
     }
   });
 
@@ -33822,7 +33849,7 @@ void main() {
   });
 
   // dist/classic-terrain.js
-  function buildClassicTerrain({ island: island3, grass, grassSide, groundTop, dirt, stone, moss, flat: flat2, meshes: meshes2 }) {
+  function buildClassicTerrain({ island: island3, grass, grassSide, groundTop, dirt, stone, moss, flat: flat2, meshes: meshes2, roadMaterials = [] }) {
     const batches = /* @__PURE__ */ new Map(), step = cellSize;
     function quad(material2, a, b, c, d, uv) {
       if (!batches.has(material2)) batches.set(material2, { positions: [], uvs: [], normals: [] });
@@ -33842,7 +33869,10 @@ void main() {
     const inLayer = (cell, index) => !!cell && index < layers.length && (index === 0 || cell.x ** 2 / (17 * layers[index].scale) ** 2 + cell.z ** 2 / (14 * layers[index].scale) ** 2 <= 1);
     for (const cell of cells.values()) {
       const { i, j, x, z, wet, height } = cell, x0 = x - step / 2, z0 = z - step / 2, points2 = [[x0, z0], [x0, z0 + step], [x0 + step, z0 + step], [x0 + step, z0]];
-      quad(wet || isRoad(x, z) ? dirt : groundTop(x, z, grass), ...points2.map(([a, b]) => [a, height, b]), points2);
+      const paved = !wet && inIsland(x, z, 1) && isRoad(x, z, 2 * cellSize) && roadMaterials.length > 0;
+      const hash = (Math.imul(i, 73856093) ^ Math.imul(j, 19349663)) >>> 0;
+      const topMaterial = paved ? roadMaterials[hash % roadMaterials.length] : wet ? dirt : isRoad(x, z) ? grass : groundTop(x, z, grass);
+      quad(topMaterial, ...points2.map(([a, b]) => [a, height, b]), paved ? [[0, 0], [0, 1], [1, 1], [1, 0]] : points2);
       for (let layer = 0; layer < layers.length; layer++) {
         if (!inLayer(cell, layer)) break;
         const { bottom, material: material2 } = layers[layer], top = layer === 0 ? height : layers[layer].top;
@@ -33851,7 +33881,7 @@ void main() {
           const lower = neighborPresent ? layer === 0 ? neighbor.height : top : bottom;
           if (lower >= top) continue;
           const [a, b] = [points2[edge], points2[(edge + 1) % 4]];
-          const side = layer === 0 && neighborPresent && !wet && !isRoad(x, z) && top - lower <= 0.5 ? grassSide || grass : material2;
+          const side = layer === 0 && paved ? topMaterial : layer === 0 && neighborPresent && !wet && top - lower <= 0.5 ? grassSide || grass : material2;
           quad(side, [a[0], top, a[1]], [a[0], lower, a[1]], [b[0], lower, b[1]], [b[0], top, b[1]], [[0, top], [0, lower], [step, lower], [step, top]]);
         }
         if (!inLayer(cell, layer + 1)) quad(material2, ...[...points2].reverse().map(([a, b]) => [a, bottom, b]), [...points2].reverse());
@@ -33867,23 +33897,67 @@ void main() {
       mesh.name = "classic-pixel-terrain";
       mesh.castShadow = mesh.receiveShadow = true;
       mesh.userData.textured = material2;
-      mesh.userData.plain = flat2(material2 === dirt ? 9990212 : material2 === stone || material2 === moss ? 8750977 : 8300117);
+      mesh.userData.plain = flat2(material2 === dirt ? 9990212 : material2 === stone || material2 === moss || roadMaterials.includes(material2) ? 8750977 : 8300117);
       island3.add(mesh);
       meshes2.push(mesh);
     }
     return { width: 34, depth: 28, cellSize, terraceStep, roadDepth, heightAt: heightAt2 };
   }
-  function addClassicPaths({ box: box2, brick }) {
-    for (let i = -34; i < 34; i++) for (let j = -29; j < 28; j++) {
-      const x = (i + 0.5) * cellSize, z = (j + 0.5) * cellSize + 0.3;
-      if (!inIsland(x, z, 1) || !isRoad(x, z)) continue;
-      box2(x, heightAt2(x, z) + 0.025, z, 0.43, 0.05, 0.43, brick, 10726297);
-    }
-  }
   var init_classic_terrain = __esm({
     "dist/classic-terrain.js"() {
       init_three_module();
       init_classic_layout();
+    }
+  });
+
+  // dist/classic-road-materials.js
+  function completeRoadTextures(maps2) {
+    let seed = 7319;
+    const random = () => {
+      seed = Math.imul(seed, 1664525) + 1013904223 >>> 0;
+      return seed / 4294967296;
+    };
+    function texture(name, source, paint) {
+      const canvas3 = document.createElement("canvas");
+      canvas3.width = canvas3.height = 128;
+      const ctx = canvas3.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(source.image, 0, 0, 128, 128);
+      paint(ctx);
+      const map = new CanvasTexture(canvas3);
+      map.colorSpace = SRGBColorSpace;
+      map.magFilter = NearestFilter;
+      map.minFilter = LinearMipmapLinearFilter;
+      map.wrapS = map.wrapT = RepeatWrapping;
+      map.anisotropy = source.anisotropy;
+      maps2[name] = map;
+    }
+    texture("cracked_stone_bricks", maps2.stone_bricks, (ctx) => {
+      for (let n = 0; n < 24; n++) {
+        let x = Math.floor(random() * 128), y = Math.floor(random() * 128);
+        for (let s = 0; s < 8 + random() * 12; s++) {
+          ctx.fillStyle = "#454941";
+          ctx.fillRect(x, y, 2, 2);
+          ctx.fillStyle = "#b0b0a1";
+          ctx.fillRect(x + 2, y, 1, 2);
+          x += Math.floor(random() * 3) - 1;
+          y += 2;
+        }
+      }
+    });
+    texture("andesite", maps2.stone, (ctx) => {
+      ctx.fillStyle = "rgba(147,149,145,.35)";
+      ctx.fillRect(0, 0, 128, 128);
+      for (let n = 0; n < 1800; n++) {
+        const value = 85 + Math.floor(random() * 100);
+        ctx.fillStyle = `rgba(${value},${value + 2},${value},.55)`;
+        ctx.fillRect(Math.floor(random() * 64) * 2, Math.floor(random() * 64) * 2, 2 + Math.floor(random() * 2) * 2, 2);
+      }
+    });
+  }
+  var init_classic_road_materials = __esm({
+    "dist/classic-road-materials.js"() {
+      init_three_module();
     }
   });
 
@@ -33897,7 +33971,7 @@ void main() {
     if (!grounds.has(name)) {
       const group = new Group();
       group.name = "classic-area-" + name;
-      group.position.set(...zones[name].offset);
+      group.position.set(...propOffset(name));
       island2.add(group);
       grounds.set(name, group);
     }
@@ -33965,6 +34039,8 @@ void main() {
       texture.wrapS = texture.wrapT = RepeatWrapping;
       maps[name] = texture;
     }));
+    completeRoadTextures(maps);
+    const roadMaterials = ["stone", "stone_bricks", "cobblestone_mossy", "cobblestone", "mossy_stone_bricks", "cracked_stone_bricks", "andesite"].map((name) => material(name));
     const dirt = material("dirt"), stone = material("stone"), brick = material("stone_bricks");
     const wood = material("oak_planks"), roof = material("spruce_planks");
     const log = material("oak_log"), end = material("oak_log_top");
@@ -33972,7 +34048,7 @@ void main() {
     const grassTop = material("grass_block_top", 8234059), grassSide = material("grass_block_side");
     const moss = material("cobblestone_mossy"), leaf = material("oak_leaves", 7312711, true);
     const groundTop = mossGround(maps);
-    const terrain = buildClassicTerrain({ island: island2, grass: grassTop, grassSide, groundTop, dirt, stone, moss, flat, meshes });
+    const terrain = buildClassicTerrain({ island: island2, grass: grassTop, grassSide, groundTop, dirt, stone, moss, flat, meshes, roadMaterials });
     setZone("home");
     box(-2, 0.14, -2.35, 4.4, 0.28, 3.6, brick, 9540743);
     box(-2, 0.32, -2.35, 4, 0.12, 3.3, wood, 11502414);
@@ -34100,8 +34176,6 @@ void main() {
         spark.scale.setScalar(1 - phase);
       });
     }
-    box(0, 0.48, 4.65, 1.5, 0.2, 0.45, wood, 10384707);
-    for (const x of [-0.55, 0.55]) box(x, 0.22, 4.65, 0.13, 0.35, 0.36, logFaces, 7952435);
     function lantern(x, y, z) {
       const metal = flat(4344121);
       box(x, y, z, 0.19, 0.27, 0.19, glow, 16766072);
@@ -34138,7 +34212,6 @@ void main() {
     }
     enrichIsland({ T: three_module_exports, island: island2, box, flat, material, plant, wood, roof, logFaces, stone, brick, moss, leaf, dirt, waterMat: waterMat2, lantern, animated: animated2, setZone, heightAt: heightAt2 });
     setZone(null);
-    addClassicPaths({ box, brick });
     const meadow = addMeadow({ island: island2, maps, plants });
     const logicalMeshCount = meshes.length;
     const batches = /* @__PURE__ */ new Map();
@@ -34167,10 +34240,10 @@ void main() {
     for (let i = meshes.length - 1; i >= 0; i--) if (!meshes[i].parent) meshes.splice(i, 1);
     const wind = addPlantWind(island2);
     animated2.push((t) => wind.update(t));
-    life2 = createLife({ scene: scene2, ambient: ambient2, sun: sun2, lamps: lamps2, weatherBounds: [38, 32], rainFloor: (x, z) => heightAt2(x, z) + (insideHouse2({ x, z }) ? 4.8 : x > -12.6 && x < -9.4 && z > -4 && z < -1.35 ? 2.5 : 0.05), onNight: (value) => {
+    life2 = createLife({ scene: scene2, ambient: ambient2, sun: sun2, lamps: lamps2, weatherBounds: [38, 32], rainFloor: (x, z) => heightAt2(x, z) + (insideMovedHouse({ x, z }) ? 4.8 : x > -12.6 && x < -9.4 && z > -4 && z < -1.35 ? 2.5 : 0.05), onNight: (value) => {
       isNight = value;
     } });
-    resident2 = await addResident({ island: island2, getWorld: () => life2.state, routeNodes: classicNodes, routeFinder: findClassicRoute, groundHeight: walkHeight, insideTest: insideHouse2, gazeTargets: { fire: [0, 5.45], pond: [6, 2.3] }, focusOn: (position, place) => {
+    resident2 = await addResident({ island: island2, getWorld: () => life2.state, routeNodes: residentNodes, routeFinder: findClassicRoute, groundHeight: walkHeight, insideTest: insideMovedHouse, gazeTargets: { fire: [propOffset("fire")[0], propOffset("fire")[2] + 3.45], pond: [6, 2.3] }, focusOn: (position, place) => {
       if (wallpaperCamera.locked) return;
       setFollowing(!following2);
       if (!following2) return;
@@ -34285,6 +34358,8 @@ void main() {
       init_island_postfx();
       init_classic_layout();
       init_classic_terrain();
+      init_classic_road_materials();
+      init_classic_props();
       canvas2 = document.getElementById("world");
       scene2 = new Scene();
       scene2.background = new Color("#d7e5e9");
@@ -34327,6 +34402,7 @@ void main() {
       materials = /* @__PURE__ */ new Map();
       flatMaterials = /* @__PURE__ */ new Map();
       textureFiles = { "red_tulip": "textures-vanilla/red_tulip.png", "orange_tulip": "textures-vanilla/orange_tulip.png", "peony_top": "textures-vanilla/peony_top.png", "stone_bricks": "textures-pixlli/stone_bricks.png", "oak_leaves": "textures-pixlli/oak_leaves.png", "oak_log_top": "textures-pixlli/oak_log_top.png", "stone": "textures-pixlli/stone.png", "dirt": "textures-pixlli/dirt.png", "vine": "textures-hd/vine.png", "cobblestone": "textures-pixlli/cobblestone.png", "cornflower": "textures-vanilla/cornflower.png", "grass_block_side": "textures-pixlli/grass_block_side.png", "sunflower_top": "textures-vanilla/sunflower_top.png", "large_fern_bottom": "textures-vanilla/large_fern_bottom.png", "large_fern_top": "textures-vanilla/large_fern_top.png", "grass_block_top": "textures-pixlli/grass_block_top.png", "water_still": "textures-hd/water_still.png", "oak_log": "textures-pixlli/oak_log.png", "oxeye_daisy": "textures-vanilla/oxeye_daisy.png", "wheat_stage_7": "textures-hd/wheat_stage_7.png", "poppy": "textures-vanilla/poppy.png", "pink_tulip": "textures-vanilla/pink_tulip.png", "blue_orchid": "textures-vanilla/blue_orchid.png", "rose_bush_bottom": "textures-vanilla/rose_bush_bottom.png", "fern": "textures-vanilla/fern.png", "peony_bottom": "textures-vanilla/peony_bottom.png", "grass_block_side_overlay": "textures-pixlli/grass_block_side_overlay.png", "tall_grass_top": "textures-pixlli/tall_grass_top.png", "azure_bluet": "textures-vanilla/azure_bluet.png", "short_grass": "textures-pixlli/short_grass.png", "sunflower_bottom": "textures-vanilla/sunflower_bottom.png", "moss_block": "textures-pixlli/moss_block.png", "rose_bush_top": "textures-vanilla/rose_bush_top.png", "tall_grass_bottom": "textures-pixlli/tall_grass_bottom.png", "lilac_top": "textures-vanilla/lilac_top.png", "lily_of_the_valley": "textures-vanilla/lily_of_the_valley.png", "sunflower_front": "textures-vanilla/sunflower_front.png", "white_tulip": "textures-vanilla/white_tulip.png", "cobblestone_mossy": "textures-pixlli/cobblestone_mossy.png", "spruce_planks": "textures-pixlli/spruce_planks.png", "allium": "textures-vanilla/allium.png", "lilac_bottom": "textures-vanilla/lilac_bottom.png", "oak_planks": "textures-pixlli/oak_planks.png", "dandelion": "textures-vanilla/dandelion.png", "sunflower_back": "textures-vanilla/sunflower_back.png" };
+      textureFiles.mossy_stone_bricks = "textures-pixlli/mossy_stone_bricks.png";
       names = [
         "oak_planks",
         "spruce_planks",
@@ -34340,6 +34416,7 @@ void main() {
         "cobblestone",
         "cobblestone_mossy",
         "stone_bricks",
+        "mossy_stone_bricks",
         "oak_leaves",
         "vine",
         "wheat_stage_7",

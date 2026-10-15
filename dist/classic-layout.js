@@ -28,6 +28,7 @@ function terrainField(x,z){
   return Math.max(0,Math.min(2.25,sum/weight));
 }
 export const cellSize=.5,terraceStep=.25,roadDepth=.125;
+export const roadWidth=1.5;
 export function cellCenter(x,z){return [Math.floor(x/cellSize)*cellSize+cellSize/2,Math.floor((z-.3)/cellSize)*cellSize+.3+cellSize/2];}
 const heightCache=new Map();
 export function baseHeightAt(x,z){[x,z]=cellCenter(x,z);const key=`${x},${z}`;if(!heightCache.has(key))heightCache.set(key,Math.round(terrainField(x,z)/terraceStep)*terraceStep);return heightCache.get(key);}
@@ -49,12 +50,12 @@ export function findClassicRoute(from,to){
 export const indoorNodes=new Set(['step','porch','door','inside','cook','bedPath','bedFoot','sleep','eat','sweep','shelter']);
 export const bridgeNodes=new Set(['bridgeWest','bridgeCenter','bridgeEast']);
 export const roadEdges=edges.filter(([a,b])=>!indoorNodes.has(a)&&!indoorNodes.has(b)&&a!=='wheat'&&b!=='wheat'&&!(bridgeNodes.has(a)&&bridgeNodes.has(b)));
-export function isRoad(x,z){
+export function isRoad(x,z,width=roadWidth){
   [x,z]=cellCenter(x,z);
   if(isWater(x,z)||x>3.5&&x<4.8&&z>1.2&&z<2.8)return false;
   // Preserve the timber floor at the lookout and the raised cottage entrance.
   if(x>8.85&&x<12.4&&z>6.5&&z<9.5||x>-5.7&&x<-1.3&&z<.25&&z>-5.5)return false;
-  return roadEdges.some(([a,b])=>{const p=classicNodes[a],q=classicNodes[b],dx=q[0]-p[0],dz=q[2]-p[2],t=Math.max(0,Math.min(1,((x-p[0])*dx+(z-p[2])*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-p[0]-t*dx,z-p[2]-t*dz)<.5;});
+  return roadEdges.some(([a,b])=>{const p=classicNodes[a],q=classicNodes[b],dx=q[0]-p[0],dz=q[2]-p[2],t=Math.max(0,Math.min(1,((x-p[0])*dx+(z-p[2])*dz)/(dx*dx+dz*dz||1)));return Math.hypot(x-p[0]-t*dx,z-p[2]-t*dz)<width/2;});
 }
 export function heightAt(x,z){return baseHeightAt(x,z)-(isRoad(x,z)?roadDepth:0);}
 for(const [name,p]of Object.entries(classicNodes))if(!indoorNodes.has(name)&&!bridgeNodes.has(name)&&!['pond','lookout','lookoutEntry'].includes(name))p[1]=heightAt(p[0],p[2])+.07;
@@ -69,6 +70,6 @@ export const insideHouse=p=>p.x>-5.7&&p.x<-1.3&&p.z>-5.5&&p.z<-2;
 export function clearPlantSpot(x,z){
   if(!inIsland(x,z,1)||isWater(x,z))return false;
   for(const {offset:[dx,,dz],bounds:[a,b,c,d]}of Object.values(zones))if(x>a+dx-.35&&x<b+dx+.35&&z>c+dz-.35&&z<d+dz+.35)return false;
-  for(const [a,b]of edges){const p=classicNodes[a],q=classicNodes[b],dx=q[0]-p[0],dz=q[2]-p[2],t=Math.max(0,Math.min(1,((x-p[0])*dx+(z-p[2])*dz)/(dx*dx+dz*dz||1)));if(Math.hypot(x-p[0]-t*dx,z-p[2]-t*dz)<.7)return false;}
+  for(const [a,b]of edges){const p=classicNodes[a],q=classicNodes[b],dx=q[0]-p[0],dz=q[2]-p[2],t=Math.max(0,Math.min(1,((x-p[0])*dx+(z-p[2])*dz)/(dx*dx+dz*dz||1)));if(Math.hypot(x-p[0]-t*dx,z-p[2]-t*dz)<roadWidth/2+.2)return false;}
   return true;
 }

@@ -1,6 +1,7 @@
 // Hand-built expansion: every structure uses the same local material library.
 import {streamCells,classicNodes} from './classic-layout.js';
 export {streamCells};
+import {propOffset,overlapsRoad,roadsideLamp} from './classic-props.js';
 
 export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFaces,stone,brick,moss,leaf,dirt,waterMat,lantern,animated,setZone,heightAt}){
   const metal=flat(0x465047),cream=flat(0xe9d9b0),green=flat(0x64924b);
@@ -133,8 +134,14 @@ export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFace
 
   // Camp clearing, well, and a picnic corner on the new southern lawn.
   setZone('fire');
-  for(let i=0;i<10;i++){const a=i*Math.PI/5;B(.1+Math.cos(a)*1.35,.025,3.6+Math.sin(a)*1.1,.5,.05,.38,dirt,0xa48e63);}
-  for(const [x,z]of [[-2,6.2],[1.6,6.6]]){B(x,.48,z,1.2,.17,.38);for(const dx of [-.45,.45])B(x+dx,.24,z,.1,.4,.32,logFaces,0x785b35);}
+  for(let i=0;i<10;i++){const a=i*Math.PI/5;const x=.1+Math.cos(a)*1.35,z=3.6+Math.sin(a)*1.1,[dx,,dz]=propOffset('fire');if(!overlapsRoad(x+dx,z+dz,.5,.38))B(x,.025,z,.5,.05,.38,dirt,0xa48e63);}
+  // Restore the two distant benches; leave the seat next to the flames removed.
+  for(const [x,originalZ]of [[-2,6.2],[1.6,6.6]]){
+    const [dx,,dz]=propOffset('fire');let z=originalZ;
+    while(overlapsRoad(x+dx,z+dz,1.2,.38))z+=.25;
+    B(x,.48,z,1.2,.17,.38);
+    for(const leg of [-.45,.45])B(x+leg,.24,z,.1,.4,.32,logFaces,0x785b35);
+  }
   const wellX=3.1,wellZ=6.2;
   setZone('well');
   for(const [dx,dz,w,d]of [[-.6,0,.22,1.4],[.6,0,.22,1.4],[0,-.6,1,.22],[0,.6,1,.22]])B(wellX+dx,.42,wellZ+dz,w,.84,d,moss,0x949f86);
@@ -152,7 +159,7 @@ export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFace
     for(const child of [...island.children])if(!before.has(child))group.add(child);
   }
   for(const name of ['gardenNorth','gardenTurn','southEast','orchard','millPath']){
-    const [x,,z]=classicNodes[name],y=heightAt(x-.8,z);B(x-.8,y+.64,z,.12,1.28,.12,logFaces,0x775a34);lantern(x-.8,y+1.5,z);
+    const [x,y,z]=roadsideLamp(name);B(x,y+.64,z,.12,1.28,.12,logFaces,0x775a34);lantern(x,y+1.5,z);
   }
   // Window boxes, chimney cap and a mailbox make the home feel inhabited.
   setZone('home');
