@@ -71,7 +71,10 @@ assert(stoneSides>0,'Missing stone road sides');
 console.log('Seven flush stone surfaces, stone road sides and gapless tiles passed.');
 
 for(const [name,zone,x,z,w,d] of [
- ['house','home',-2,-1.675,4.9,5.65],
+ // Check occupied ground separately from the elevated roof overhang.
+ ['house walls','home',-3.115,-2.35,6.75,3.7],
+ ['porch','home',-3.115,.3,7.05,1.7],
+ ['front steps','home',-.85,1.77,1.55,.4],
  ...[1.8,3.35,4.9].map(z=>['crop bed','garden',-7,z,2.66,1.3]),
  ['cart','garden',-5.5,6,1,1.8],['fence','garden',-7.2,5.9,3.2,.2],['campfire','fire',0,3.45,1.6,1.6]
 ]){const [dx,,dz]=propOffset(zone);assert(!overlapsRoad(x+dx,z+dz,w,d),name+' overlaps the fixed road');}

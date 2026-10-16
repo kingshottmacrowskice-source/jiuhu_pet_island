@@ -2,7 +2,7 @@ import {nodes as originalNodes,edges} from './life-routes.js';
 
 // Buildings keep their original proportions; only their grounds move apart.
 export const zones={
-  home:{offset:[-1.5,1,-1.5],bounds:[-4.8,.95,-4.5,1.95]},
+  home:{offset:[-1.5,1,-1.5],bounds:[-7.1,.95,-4.5,1.95]},
   tree:{offset:[1,.5,-1.5],bounds:[2.3,3.7,-3.5,-2.4]},
   wheat:{offset:[-2,.25,1.6],bounds:[-4.95,-2.1,1.9,4.25]},
   fire:{offset:[0,.25,2],bounds:[-1.4,1.5,2.1,5]},
@@ -32,10 +32,20 @@ export const roadWidth=1.5;
 export function cellCenter(x,z){return [Math.floor(x/cellSize)*cellSize+cellSize/2,Math.floor((z-.3)/cellSize)*cellSize+.3+cellSize/2];}
 const heightCache=new Map();
 export function baseHeightAt(x,z){[x,z]=cellCenter(x,z);const key=`${x},${z}`;if(!heightCache.has(key))heightCache.set(key,Math.round(terrainField(x,z)/terraceStep)*terraceStep);return heightCache.get(key);}
-export const streamCells=new Set(['5,1','5,0','6,0','6,-1','6,-2','6,-3','5,-3','5,-4','5,-5','5,-6','5,-7','5,-8','5,-9','5,-10','5,-11','5,-12']);
+// Edge-connected square tiles form two stepped bends; retain bridge and waterfall ends.
+// Shared by excavation, water and banks so bends never shear the water texture.
+export const streamCells=new Set(['5,1','5,0','6,0','6,-1','6,-2','6,-3','5,-3',
+  '5,-4','4,-4','4,-5','4,-6','5,-6','5,-7','5,-8','6,-8','6,-9','6,-10',
+  '5,-10','5,-11','5,-12']);
+// Half-block pond silhouette shared by excavation, water and bank stones.
+export const pondCells=[];
+for(const [z,left,right]of [[.5,2.5,4.5],[1,2,4.5],[1.5,1.5,5],[2,1.5,5],[2.5,2,5],[3,2,4.5],[3.5,2.5,4]])
+  for(let x=left;x<right;x+=.5)pondCells.push([x+.25,z+.25]);
+const pondCellKeys=new Set(pondCells.map(([x,z])=>Math.floor(x*2)+','+Math.floor(z*2)));
+export const isPondLocal=(x,z)=>pondCellKeys.has(Math.floor(x*2)+','+Math.floor(z*2));
 export function isWater(x,z){
   x-=zones.pond.offset[0];z-=zones.pond.offset[2];
-  return (x>1.5&&x<4.5&&z>.5&&z<3.5)||streamCells.has(`${Math.floor(x+.5)},${Math.floor(z+.5)}`);
+  return isPondLocal(x,z)||streamCells.has(`${Math.floor(x+.5)},${Math.floor(z+.5)}`);
 }
 const nodeZones={home:'home',hub:'home',west:'home',wheatEntry:'wheat',wheat:'wheat',firePath:'fire',fire:'fire',north:'home',pond:'pond',turn:'tree',treePath:'tree',tree:'tree',step:'home',porch:'home',door:'home',inside:'home',cook:'home',bedPath:'home',bedFoot:'home',sleep:'home',eat:'home',sweep:'home',shelter:'home',south:'fire',gardenTurn:'wheat',gardenCorner:'garden',gardenApproach:'garden',garden:'garden',gardenNorth:'garden',shedPath:'shed',millPath:'mill',bridgeApproach:'pond',bridgeWest:'pond',bridgeCenter:'pond',bridgeEast:'pond',orchard:'pond',southEast:'fire',wellPath:'well',lookoutEntry:'lookout',lookout:'lookout'};
 export const classicNodes=Object.fromEntries(Object.entries(originalNodes).map(([key,p])=>[key,worldPoint(nodeZones[key],...p)]));

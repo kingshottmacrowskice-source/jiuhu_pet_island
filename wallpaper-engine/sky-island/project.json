@@ -52,5 +52,14 @@
         "index": 3
       }
     }
-  }
+  },
+  "preview" : "preview.png",
+  "ratingsex" : "none",
+  "ratingviolence" : "none",
+  "tags" : [ "Pixel art" ],
+  "title" : "酒狐 · 云上小日子",
+  "type" : "web",
+  "version" : 1,
+  "workshopid" : "3819544205",
+  "workshopurl" : "steam://url/CommunityFilePage/3819544205"
 }

@@ -1,10 +1,15 @@
+import {houseWidthScale} from './classic-house.js';
 import {edges} from './life-routes.js';
 import {zones,classicNodes,indoorNodes,insideHouse,heightAt,isRoad,inIsland,isWater,cellSize} from './classic-layout.js';
 
 // Visual placement is separate from the fixed terrain and road layout.
+export const homeItemShift={chimney:-.8,table:-1,bed:-1};
 export const propShifts={home:[0,0,-.5],garden:[-1,0,0],fire:[1,0,0]};
 export function propOffset(name){return zones[name].offset.map((v,i)=>v+(propShifts[name]?.[i]||0));}
 export const residentNodes=Object.fromEntries(Object.entries(classicNodes).map(([name,p])=>[name,p.map((v,i)=>v+(indoorNodes.has(name)?propShifts.home[i]:0))]));
+// Keep activity destinations aligned with the relocated furniture.
+residentNodes.eat[0]+=homeItemShift.table;
+for(const name of ['bedPath','bedFoot','sleep'])residentNodes[name][0]+=homeItemShift.bed;
 // Activity destinations and walking access never alter the road graph.
 for(const [name,x,z]of [['fire',0,5.7],['gardenGate',-10.1,2],['garden',-12,2]])residentNodes[name]=[x,heightAt(x,z)+.07,z];
 const residentEdges=edges.map(([a,b])=>[a==='garden'?'gardenGate':a,b==='garden'?'gardenGate':b]).concat([['gardenGate','garden']]);
@@ -14,7 +19,7 @@ export function findResidentRoute(from,to){
   if(!previous.has(to))throw Error('No resident route');
   const path=[];for(let at=to;at!==from;at=previous.get(at))path.unshift(at);return path;
 }
-export const insideMovedHouse=p=>insideHouse({x:p.x-propShifts.home[0],z:p.z-propShifts.home[2]});
+export const insideMovedHouse=p=>insideHouse({x:.23+((p.x-propOffset('home')[0])-.23)/houseWidthScale+zones.home.offset[0],z:p.z-propShifts.home[2]});
 
 export function overlapsRoad(x,z,w,d){
   const a=x-w/2,b=x+w/2,c=z-d/2,e=z+d/2;

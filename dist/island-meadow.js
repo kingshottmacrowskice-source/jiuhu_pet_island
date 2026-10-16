@@ -19,7 +19,7 @@ export function mossGround(maps) {
     }
     lc.putImageData(pixels,0,0);ctx.drawImage(layer,0,0);
     const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;texture.magFilter=T.NearestFilter;texture.wrapS=texture.wrapT=T.RepeatWrapping;
-    return new T.MeshStandardMaterial({map:texture,roughness:1});
+    const mat=new T.MeshStandardMaterial({map:texture,roughness:1});mat.userData.seasonGrass=true;return mat;
   });
   const patches=[[-13,1,3],[-11,-7,2.8],[.8,-9.8,3],[12,-4.8,2.8],[7.6,10.6,2.8],[-4.8,10.1,2.7]];
   return (x,z,grass)=>{

@@ -8,13 +8,6 @@ export function createLife({scene,ambient,sun,lamps,onNight,rainFloor=null,weath
  moonLight.name='moonlight';scene.add(moonLight);
  const names={clear:'晴天',cloud:'多云',rain:'下雨',snow:'下雪'};
  let weatherAge=0,lastLabel='',lastNight=null;
- const cloudRoot=new T.Group();scene.add(cloudRoot);
- const cloudMat=new T.MeshStandardMaterial({color:0xf0f2e9,transparent:true,opacity:.75,roughness:1});
- for(let i=0;i<7;i++){
-  const group=new T.Group();group.position.set(-20+i*6,9+(i%3),-13-i%2*4);
-  for(let j=0;j<4;j++){const mesh=new T.Mesh(new T.BoxGeometry(2.8,1+j%2*.4,2),cloudMat);mesh.position.set(j*1.7,0,j%2*.4);group.add(mesh);}
-  cloudRoot.add(group);
- }
  const count=800,positions=new Float32Array(count*3),speeds=new Float32Array(count);
  for(let i=0;i<count;i++){positions[i*3]=(Math.random()-.5)*weatherBounds[0];positions[i*3+1]=Math.random()*17;positions[i*3+2]=(Math.random()-.5)*weatherBounds[1];speeds[i]=.7+Math.random()*.6;}
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.BufferAttribute(positions,3));
@@ -42,8 +35,7 @@ export function createLife({scene,ambient,sun,lamps,onNight,rainFloor=null,weath
   moonLight.position.copy(sun.userData.solarDirection).multiplyScalar(-32);
   moonLight.intensity=.12*T.MathUtils.smoothstep(-sun.userData.solarDirection.y,0,.2);
   lamps.forEach(l=>l.intensity=.8+(1-daylight)*3);
-  stars.visible=false;cloudMat.color.set(overcast?0x8297a3:0xf0f2e9);cloudMat.opacity=overcast?.85:.45;cloudRoot.visible=!state.night||overcast;
-  for(const cloud of cloudRoot.children){cloud.position.x+=dt*.09;if(cloud.position.x>26)cloud.position.x=-28;}
+  stars.visible=false;
   precipitation.visible=snow;rain.visible=wet;precipitation.material.size=.12;precipitation.material.opacity=.85;
   if((wet||snow)&&dt){for(let i=0;i<count;i++){
    let p=i*3;positions[p+1]-=dt*(snow?1.25:12)*speeds[i];positions[p]+=dt*(snow?Math.sin(state.elapsed+i)*.3:-1.2);

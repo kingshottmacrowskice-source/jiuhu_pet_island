@@ -1,13 +1,16 @@
+import {houseX,houseWidthScale} from './classic-house.js';
 // Hand-built expansion: every structure uses the same local material library.
-import {streamCells,classicNodes} from './classic-layout.js';
+import {streamCells,classicNodes,isPondLocal} from './classic-layout.js';
 export {streamCells};
-import {propOffset,overlapsRoad,roadsideLamp} from './classic-props.js';
+import {homeItemShift,propOffset,overlapsRoad,roadsideLamp} from './classic-props.js';
 
 export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFaces,stone,brick,moss,leaf,dirt,waterMat,lantern,animated,setZone,heightAt}){
   const metal=flat(0x465047),cream=flat(0xe9d9b0),green=flat(0x64924b);
   const B=(x,y,z,w,h,d,mat=wood,color=0xa48050,parent=undefined)=>{
     const mesh=box(x,y,z,w,h,d,mat,color,parent);
     if(x>-8.3&&x<-5.7&&z>1.2&&z<5.5&&y>.16&&[leaf,green].includes(mat)||x>-8.3&&x<-5.7&&z>1.2&&z<5.5&&[0xd98e43,0x95b66e,0xc5513d].includes(color))mesh.userData.wind={root:.16,height:.55,amplitude:.025};
+    mesh.userData.preserveSummerPlant=x>-8.9&&x<-5.05&&z>.1&&z<6.9;
+    if(!mesh.userData.preserveSummerPlant&&(mesh.userData.wind||mat===green||(mat===leaf&&y<1))){mesh.userData.seasonPlant=true;mesh.userData.seasonBaseY=mesh.userData.wind?.root??0;}
     return mesh;
   };
   function fence(x,z,w,axis='x'){
@@ -20,7 +23,7 @@ export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFace
     B(x,y+.44,z,.27,.07,.27,dirt,0x785c3f);
   }
   function flower(x,y,z,color=0xedb1a4){
-    const W=(...args)=>{const mesh=B(...args);mesh.userData.wind={root:y,height:.5,amplitude:.025};return mesh;};
+    const W=(...args)=>{const mesh=B(...args);mesh.userData.wind={root:y,height:.5,amplitude:.025};mesh.userData.seasonPlant=!mesh.userData.preserveSummerPlant;mesh.userData.seasonBaseY=y;return mesh;};
     W(x,y+.18,z,.035,.35,.035,green,0x64924b);
     W(x,y+.39,z,.21,.07,.11,flat(color),color);
     W(x,y+.39,z,.11,.07,.21,flat(color),color);
@@ -93,10 +96,11 @@ export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFace
   setZone('pond');
   for(const key of streamCells){
     const [x,z]=key.split(',').map(Number);
-    B(x,-.09,z,1,.06,1,waterMat,0x41adbf);
+    const tile=B(x,-.09,z,1,.06,1,waterMat,0x41adbf);
+    tile.userData.streamWater=true;
     for(const [dx,dz]of [[-1,0],[1,0],[0,-1],[0,1]]){
       const nx=x+dx,nz=z+dz;
-      if(streamCells.has(`${nx},${nz}`)||(nx>=2&&nx<=4&&nz>=1&&nz<=3)||nz<-12)continue;
+      if(streamCells.has(`${nx},${nz}`)||isPondLocal(nx,nz)||nz<-12)continue;
       B(x+dx*.56,.04,z+dz*.56,dx?.18:.65,.17,dz?.18:.65,moss,0x8f9d83);
     }
   }
@@ -112,7 +116,7 @@ export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFace
     B(5.92,1.07,z,2.25,.09,.09);
   }
   lantern(7,1.37,-1.32);
-  for(const [x,z]of [[4.4,-5.5],[6,-4.4],[7,.8],[5.2,3.7]]){
+  for(const [x,z]of [[3.2,-5.5],[6,-4.4],[7,.8],[5.2,3.7]]){
     for(let n=0;n<3;n++)B(x+n*.12,.4+n*.06,z,.035,.8+n*.12,.035,green,0x77a464);
   }
   for(const [x,z]of [[3.7,2.7],[2.3,1.2]]){B(x,-.002,z,.37,.025,.28,green,0x75a362);flower(x,.02,z,0xd8a8b3);}
@@ -163,14 +167,14 @@ export function enrichIsland({T,island,box,flat,material,plant,wood,roof,logFace
   }
   // Window boxes, chimney cap and a mailbox make the home feel inhabited.
   setZone('home');
-  B(-2.85,1.2,-.36,1.7,.2,.3,wood,0xa48050);
-  for(const x of [-3.45,-3.05,-2.65,-2.25])flower(x,1.32,-.3,x<-3?0xeacb80:0xd997ad);
+  B(houseX(-2.85),1.2,-.36,1.7*houseWidthScale,.2,.3,wood,0xa48050);
+  for(const x of [-3.45,-3.05,-2.65,-2.25])flower(houseX(x),1.32,-.3,x<-3?0xeacb80:0xd997ad);
   B(.65,.6,1.05,.1,1.2,.1,logFaces,0x775a34);B(.65,1.2,1.05,.45,.3,.35,roof,0x6c573a);
   B(.65,1.21,1.24,.27,.025,.035,metal,0x465047);
   const smokeMat=new T.MeshBasicMaterial({color:0xe8e9da,transparent:true,opacity:.38,depthWrite:false});
   for(let i=0;i<4;i++){
-    const p=B(-3.3,5.3+i*.35,-3.2,.2,.2,.2,smokeMat,0xe8e9da);
-    p.userData.dynamic=true; animated.push(t=>{p.position.y=5.2+(t*.35+i*.4)%1.6;p.position.x=-3.3+Math.sin(t*.4+i)*.15;});
+    const p=B(-3.3+homeItemShift.chimney,6+i*.35,-3.2,.2,.2,.2,smokeMat,0xe8e9da);
+    p.userData.dynamic=true; animated.push(t=>{p.position.y=5.9+(t*.35+i*.4)%1.6;p.position.x=-3.3+homeItemShift.chimney+Math.sin(t*.4+i)*.15;});
   }
   // Placed vegetation rather than random clutter in walking space.
   setZone(null);
