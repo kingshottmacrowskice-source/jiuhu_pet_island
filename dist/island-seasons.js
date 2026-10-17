@@ -1,9 +1,10 @@
 import * as T from './vendor/three.module.js';
+import {createSeasonScenes} from './season-scenes.js';
 import {heightAt} from './classic-layout.js';
 
-// Only the two completed seasons participate in the cycle. One season = 3 island days.
+// Four seasons, three island days each; the festival is an independent overlay.
 export function createSeasons({island,maps,meshes,plants,meadow}){
-  const state={current:'summer',auto:false,age:0},duration=1440;
+  const state={current:'summer',auto:false,age:0,halloween:false},duration=1440;
   let textured=true;
   // Recolour the source with a full-strength luminance ramp; do not flatten its texture contrast.
   const grassCanvas=document.createElement('canvas');
@@ -91,31 +92,46 @@ export function createSeasons({island,maps,meshes,plants,meadow}){
     particles[i]={speed:.26+random()*.22,phase:random()*Math.PI*2};
   }
   for(let i=0;i<count;i++)reset(i,true);
+  const scenes=createSeasonScenes(island,emitters);
+  function recolor(source,rgb){
+    const c=document.createElement('canvas');c.width=source.image.width;c.height=source.image.height;
+    const ctx=c.getContext('2d');ctx.drawImage(source.image,0,0);const data=ctx.getImageData(0,0,c.width,c.height);
+    for(let i=0;i<data.data.length;i+=4){const l=(data.data[i]*.2126+data.data[i+1]*.7152+data.data[i+2]*.0722)/255;for(let k=0;k<3;k++)data.data[i+k]=rgb[k]*Math.min(1,l+.2);}
+    ctx.putImageData(data,0,0);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.magFilter=T.NearestFilter;t.wrapS=t.wrapT=T.RepeatWrapping;t.anisotropy=source.anisotropy;return t;
+  }
+  const autumnLeaves=recolor(maps.oak_leaves,[255,160,57]),winterLeaves=recolor(maps.oak_leaves,[217,235,243]);
+  const autumnGrass=recolor(maps.grass_block_top,[218,185,110]),winterGrass=recolor(maps.grass_block_top,[245,250,255]);
+  const order=['spring','summer','autumn','winter'];
   const controls=document.createElement('div');controls.style.cssText='display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap';
-  const label=document.createElement('span');label.textContent='季节';label.style.fontSize='11px';
-  const springButton=document.createElement('button'),summerButton=document.createElement('button'),autoButton=document.createElement('button');
-  springButton.id='season-spring';springButton.textContent='春 · 樱花';summerButton.id='season-summer';summerButton.textContent='夏 · 绿荫';autoButton.id='season-auto';
-  controls.append(label,springButton,summerButton,autoButton);document.querySelector('.life-controls').append(controls);
-  const note=document.createElement('small');note.textContent='当前开放春、夏 · 自动更替时每季 3 个小岛日';controls.after(note);
+  const label=document.createElement('span');label.textContent='季节';label.style.fontSize='11px';controls.append(label);
+  const buttons={};
+  for(const [i,name]of order.entries()){const b=document.createElement('button');b.id='season-'+name;b.textContent=['春 · 樱花','夏 · 绿荫','秋 · 金叶','冬 · 初雪'][i];b.onclick=()=>setSeason(name);buttons[name]=b;controls.append(b);}
+  const autoButton=document.createElement('button'),festivalButton=document.createElement('button');autoButton.id='season-auto';festivalButton.id='season-halloween';controls.append(autoButton,festivalButton);document.querySelector('.life-controls').append(controls);
+  const note=document.createElement('small');note.textContent='四季自动更替：每季 3 个小岛日 · 万圣节可与任意季节搭配';controls.after(note);
   function apply(value=textured){
-    textured=value;const isSpring=state.current==='spring';
+    textured=value;const isSpring=state.current==='spring',isAutumn=state.current==='autumn',isWinter=state.current==='winter';
     for(const item of leaves){
-      const {mesh,mat,map,color,plain}=item;mat.map=isSpring?maps.cherry_leaves:map;mat.color.copy(isSpring?new T.Color(0xffffff):color);mat.needsUpdate=true;
-      mesh.userData.plain.color.copy(isSpring?new T.Color(0xeeb4cc):plain);
+      const {mesh,mat,map,color,plain}=item;mat.map=isSpring?maps.cherry_leaves:isAutumn?autumnLeaves:isWinter?winterLeaves:map;mat.color.copy(state.current!=='summer'?new T.Color(0xffffff):color);mat.needsUpdate=true;
+      mesh.userData.plain.color.copy(isSpring?new T.Color(0xeeb4cc):isAutumn?new T.Color(0xe6a044):isWinter?new T.Color(0xd9ebf3):plain);
       for(const depth of [mesh.customDepthMaterial,mesh.customDistanceMaterial])if(depth){depth.map=mat.map;depth.needsUpdate=true;}
     }
-    for(const {mesh,mat,map,color,plain}of grass){mat.map=isSpring?springGrass:map;mat.color.copy(isSpring?new T.Color(0xffffff):color);mat.needsUpdate=true;mesh.userData.plain.color.copy(isSpring?new T.Color(0xa6e2af):plain);}
-    for(const object of hidden)object.visible=!isSpring&&(object.userData.onlyPlain?!textured:plants.includes(object)?textured:summerVisibility.get(object));
+    for(const {mesh,mat,map,color,plain}of grass){mat.map=isSpring?springGrass:isAutumn?autumnGrass:isWinter?winterGrass:map;mat.color.copy(state.current!=='summer'?new T.Color(0xffffff):color);mat.needsUpdate=true;mesh.userData.plain.color.copy(isSpring?new T.Color(0xa6e2af):isAutumn?new T.Color(0xc9af75):isWinter?new T.Color(0xeaf3fa):plain);}
+    for(const object of hidden)object.visible=!isSpring&&!isWinter&&(object.userData.onlyPlain?!textured:plants.includes(object)?textured:summerVisibility.get(object));
     spring.visible=petals.visible=isSpring;
-    springButton.setAttribute('aria-pressed',String(isSpring));summerButton.setAttribute('aria-pressed',String(!isSpring));
-    for(const button of [springButton,summerButton,autoButton]){const active=button===autoButton?state.auto:button===springButton?isSpring:!isSpring;button.style.background=active?'#365947':'';button.style.color=active?'#ffffff':'';}
+    scenes.apply(state.current,state.halloween);
+    for(const [name,button]of Object.entries(buttons)){const active=state.current===name;button.setAttribute('aria-pressed',String(active));button.style.background=active?'#365947':'';button.style.color=active?'#ffffff':'';}
+    for(const [button,active]of [[autoButton,state.auto],[festivalButton,state.halloween]]){button.style.background=active?'#644276':'';button.style.color=active?'#ffffff':'';button.setAttribute('aria-pressed',String(active));}
+    festivalButton.textContent=state.halloween?'万圣节：开':'万圣节：关';
     autoButton.setAttribute('aria-pressed',String(state.auto));autoButton.textContent=state.auto?'自动更替：开':'自动更替：关';
   }
-  function setSeason(name){if(!['spring','summer'].includes(name))return;state.current=name;state.age=0;apply();}
-  springButton.onclick=()=>setSeason('spring');summerButton.onclick=()=>setSeason('summer');autoButton.onclick=()=>{state.auto=!state.auto;state.age=0;apply();};
+  function setSeason(name){if(!order.includes(name))return;state.current=name;state.age=0;apply();}
+  function setHalloween(value){state.halloween=Boolean(value);apply();}
+  festivalButton.onclick=()=>setHalloween(!state.halloween);
+  autoButton.onclick=()=>{state.auto=!state.auto;state.age=0;apply();};
   let elapsed=0;
   function update(dt){
-    if(state.auto){state.age+=dt;if(state.age>=duration){const remainder=state.age%duration,turns=Math.floor(state.age/duration);if(turns%2)setSeason(state.current==='spring'?'summer':'spring');state.age=remainder;}}
+    if(state.auto){state.age+=dt;if(state.age>=duration){const remainder=state.age%duration,turns=Math.floor(state.age/duration);setSeason(order[(order.indexOf(state.current)+turns)%order.length]);state.age=remainder;}}
+    scenes.update(dt);
     if(state.current!=='spring'||dt<=0)return;elapsed+=dt;
     for(let i=0;i<count;i++){
       const p=particles[i];if(!p)continue;const j=i*3;
@@ -124,5 +140,5 @@ export function createSeasons({island,maps,meshes,plants,meadow}){
     }
     geo.attributes.position.needsUpdate=true;
   }
-  apply();return {state,setSeason,apply,update,duration,stats:{leafMeshes:leaves.length,grassMeshes:grass.length,clusters:anchors.length,particles:count}};
+  apply();return {state,setSeason,setHalloween,apply,update,duration,stats:{leafMeshes:leaves.length,grassMeshes:grass.length,clusters:anchors.length,particles:count}};
 }

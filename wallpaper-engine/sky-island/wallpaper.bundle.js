@@ -31839,9 +31839,302 @@ void main() {
     return true;
   }
 
+  // dist/classic-house.js
+  var houseWidthScale = 1.5;
+  var houseX = (x) => 0.23 + (x - 0.23) * houseWidthScale;
+  function buildClassicHouse({ T, box: box2, material: material2, shell: shell2 }) {
+    const timber = material2("dark_oak_planks"), slate = material2("cobbled_deepslate"), wall = material2("stripped_oak_log");
+    const B = (x, y, z, w, h, d, m = timber) => box2(houseX(x), y, z, w * houseWidthScale, h, d, m, m === slate ? 5330010 : m === wall ? 12163685 : 4797217, shell2);
+    function beam(a, b, s = 0.14) {
+      const start = new T.Vector3(houseX(a[0]), a[1], a[2]), end = new T.Vector3(houseX(b[0]), b[1], b[2]), delta = end.clone().sub(start), mid = start.clone().add(end).multiplyScalar(0.5);
+      const m = box2(...mid.toArray(), s, delta.length(), s, timber, 4797217, shell2);
+      m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), delta.normalize());
+    }
+    for (const y of [0.47, 1.28, 2.87]) {
+      B(-2, y, -4.15, 4.5, 0.17, 0.17);
+      for (const x of [-4.23, 0.23]) B(x, y, -2.35, 0.17, 0.17, 3.7);
+    }
+    for (const x of [-4.16, -2.85, -1.65, 0.16]) B(x, 1.65, -4.15, 0.18, 2.75, 0.18);
+    for (const x of [-4.23, 0.23]) {
+      for (const z of [-4.03, -2.35, -0.61]) B(x, 1.65, z, 0.18, 2.75, 0.18);
+      for (const [a, b] of [[-3.93, -2.45], [-2.25, -0.71]]) {
+        beam([x, 1.38, a], [x, 2.78, b]);
+        beam([x, 2.78, a], [x, 1.38, b]);
+      }
+    }
+    for (const [a, b] of [[-4.05, -2.95], [-2.75, -1.75], [-1.55, 0.05]]) beam([a, 1.38, -4.16], [b, 2.78, -4.16]);
+    for (const x of [-4.16, -1.65, 0.16]) B(x, 1.65, -0.46, 0.18, 2.75, 0.18);
+    B(-2, 2.91, -0.46, 4.5, 0.2, 0.2);
+    B(-2.85, 0.46, -0.46, 2.45, 0.18, 0.18);
+    function gable(cx, cz, width, depth, eave, rise, axis = "z") {
+      const p = (u, y, v) => axis === "z" ? [cx + u, y, cz + v] : [cx + v, y, cz + u];
+      const block = (u, y, v, w, h, d, m) => axis === "z" ? B(...p(u, y, v), w, h, d, m) : B(...p(u, y, v), d, h, w, m);
+      const n = Math.ceil(width / 0.42), step = width / n;
+      for (let i = 0; i < n; i++) {
+        const u = -width / 2 + (i + 0.5) * step, y = eave + rise * (1 - Math.abs(u) / (width / 2));
+        block(u, y, 0, step + 0.012, rise * 2 / n + 0.06, depth, slate);
+        for (const v of [-depth / 2, depth / 2]) block(u, y, v, step + 0.018, rise * 2 / n + 0.09, 0.17, timber);
+      }
+      for (const u of [-width / 2, width / 2]) block(u, eave - 0.03, 0, 0.18, 0.24, depth + 0.16, timber);
+      block(0, eave + rise + 0.02, 0, 0.24, 0.24, depth + 0.18, timber);
+      for (const v of [-depth / 2 + 0.14, depth / 2 - 0.14]) {
+        for (let i = 0; i < n; i++) {
+          const u = -width / 2 + (i + 0.5) * step, h = rise * (1 - Math.abs(u) / (width / 2)) - 0.18;
+          if (h > 0) block(u, eave + h / 2 - 0.1, v, step, h, 0.12, wall);
+        }
+        const face = v + Math.sign(v) * 0.1;
+        beam(p(-width / 2, eave - 0.1, face), p(width / 2, eave - 0.1, face), 0.18);
+        beam(p(0, eave - 0.1, face), p(0, eave + rise - 0.12, face), 0.16);
+        for (const s of [-1, 1]) beam(p(s * (width / 2 - 0.15), eave, face), p(0, eave + rise - 0.12, face), 0.16);
+      }
+    }
+    gable(-2, -2.35, 4.95, 4.05, 3.15, 2.15);
+    gable(-2, -2.1, 2.8, 5.05, 3.3, 1.42, "x");
+    gable(-2.85, -0.48, 2.25, 1.35, 3.18, 1.35);
+    B(-2, 2.79, 0.3, 4.9, 0.16, 1.95, slate);
+    for (const z of [-0.68, 1.28]) B(-2, 2.77, z, 5.05, 0.22, 0.16);
+    for (const x of [-4.46, 0.46]) B(x, 2.77, 0.3, 0.16, 0.22, 1.95);
+    B(-2, 2.58, 1.05, 4.45, 0.23, 0.22);
+    for (const x of [-4.1, 0.1]) {
+      B(x, 1.47, 1.05, 0.23, 2.4, 0.23);
+      beam([x, 2.02, 1.05], [x + (x < 0 ? 0.48 : -0.48), 2.55, 1.05], 0.17);
+      beam([x, 2.02, 1.05], [x, 2.62, 0.43], 0.17);
+      B(x, 2.57, 0.23, 0.18, 0.2, 1.8);
+    }
+    const leaves = material2("oak_leaves", 7969616, true);
+    for (const [x, z, w, d] of [[-3.9, -3.95, 0.46, 0.5], [-3.64, -3.7, 0.42, 0.42], [-0.45, -0.85, 0.46, 0.5], [-0.7, -1, 0.35, 0.36], [-2.5, -4.05, 0.36, 0.4]]) {
+      const n = Math.ceil(4.95 / 0.42), step = 4.95 / n, u = Math.floor((x + 2 + 4.95 / 2) / step) * step - 4.95 / 2 + step / 2;
+      const top = 3.15 + 2.15 * (1 - Math.abs(u) / (4.95 / 2)) + (2.15 * 2 / n + 0.06) / 2;
+      box2(houseX(x), top + 0.12, z, w, 0.26, d, leaves, 7969616, shell2);
+    }
+    for (const [x, z] of [[-4.05, 0.8], [-3.72, 0.86]]) box2(houseX(x), 2.98, z, 0.38, 0.24, 0.42, leaves, 7969616, shell2);
+  }
+
+  // dist/classic-props.js
+  var homeItemShift = { chimney: -0.8, table: -1, bed: -1 };
+  var propShifts = { home: [0, 0, -0.5], garden: [-1, 0, 0], fire: [1, 0, 0] };
+  function propOffset(name) {
+    return zones[name].offset.map((v, i) => v + (propShifts[name]?.[i] || 0));
+  }
+  var residentNodes = Object.fromEntries(Object.entries(classicNodes).map(([name, p]) => [name, p.map((v, i) => v + (indoorNodes.has(name) ? propShifts.home[i] : 0))]));
+  residentNodes.eat[0] += homeItemShift.table;
+  for (const name of ["bedPath", "bedFoot", "sleep"]) residentNodes[name][0] += homeItemShift.bed;
+  for (const [name, x, z] of [["fire", 0, 5.7], ["gardenGate", -10.1, 2], ["garden", -12, 2]]) residentNodes[name] = [x, heightAt(x, z) + 0.07, z];
+  var residentEdges = edges.map(([a, b]) => [a === "garden" ? "gardenGate" : a, b === "garden" ? "gardenGate" : b]).concat([["gardenGate", "garden"]]);
+  function findResidentRoute(from, to) {
+    const queue = [from], previous = /* @__PURE__ */ new Map([[from, null]]);
+    for (let i = 0; i < queue.length; i++) {
+      const at = queue[i];
+      if (at === to) break;
+      for (const [a, b] of residentEdges) {
+        const next = a === at ? b : b === at ? a : null;
+        if (next && !previous.has(next)) {
+          previous.set(next, at);
+          queue.push(next);
+        }
+      }
+    }
+    if (!previous.has(to)) throw Error("No resident route");
+    const path = [];
+    for (let at = to; at !== from; at = previous.get(at)) path.unshift(at);
+    return path;
+  }
+  var insideMovedHouse = (p) => insideHouse({ x: 0.23 + (p.x - propOffset("home")[0] - 0.23) / houseWidthScale + zones.home.offset[0], z: p.z - propShifts.home[2] });
+  function overlapsRoad(x, z, w, d) {
+    const a = x - w / 2, b = x + w / 2, c = z - d / 2, e = z + d / 2;
+    for (let i = Math.floor(a / cellSize); i <= Math.floor(b / cellSize); i++) for (let j = Math.floor((c - 0.3) / cellSize); j <= Math.floor((e - 0.3) / cellSize); j++) {
+      const px2 = (i + 0.5) * cellSize, pz2 = (j + 0.5) * cellSize + 0.3;
+      if (px2 + cellSize / 2 > a + 1e-6 && px2 - cellSize / 2 < b - 1e-6 && pz2 + cellSize / 2 > c + 1e-6 && pz2 - cellSize / 2 < e - 1e-6 && isRoad(px2, pz2)) return true;
+    }
+    return false;
+  }
+  function roadsideLamp(name) {
+    const [nx, , nz] = classicNodes[name], x = nx - 0.8, z = nz;
+    for (let r = 0; r <= 3; r += 0.25) for (let n = 0; n < (r ? 16 : 1); n++) {
+      const a = n * Math.PI / 8, px2 = x + Math.cos(a) * r, pz2 = z + Math.sin(a) * r;
+      if (!inIsland(px2, pz2, 1) || isWater(px2, pz2) || overlapsRoad(px2, pz2, 0.6, 0.6)) continue;
+      if (Object.keys(zones).some((key) => {
+        const [dx, , dz] = propOffset(key), [a2, b, c, d] = zones[key].bounds;
+        return px2 + 0.3 > a2 + dx && px2 - 0.3 < b + dx && pz2 + 0.3 > c + dz && pz2 - 0.3 < d + dz;
+      })) continue;
+      return [px2, heightAt(px2, pz2), pz2];
+    }
+    throw Error("No clear roadside lamp position: " + name);
+  }
+
+  // dist/season-scenes.js
+  function createSeasonScenes(island2, emitters) {
+    const autumn = new Group(), winter = new Group(), halloween = new Group();
+    autumn.name = "autumn-leaf-carpet";
+    winter.name = "winter-snow-garden";
+    halloween.name = "halloween-lantern-festival";
+    island2.add(autumn, winter, halloween);
+    const cube = new BoxGeometry(1, 1, 1), materials2 = /* @__PURE__ */ new Map();
+    function box2(parent, x, y, z, w, h, d, color, glow = false) {
+      const key = color + ":" + glow;
+      if (!materials2.has(key)) materials2.set(key, new MeshStandardMaterial({ color, roughness: 0.9, emissive: glow ? color : 0, emissiveIntensity: glow ? 2 : 0 }));
+      const m = new Mesh(cube, materials2.get(key));
+      m.position.set(x, y, z);
+      m.scale.set(w, h, d);
+      m.castShadow = m.receiveShadow = true;
+      parent.add(m);
+      return m;
+    }
+    let seed = 719;
+    const rand = () => (seed = Math.imul(seed, 1664525) + 1013904223 >>> 0) / 4294967296;
+    const leafColors = [14258226, 12538160, 15184978];
+    const carpet = [[], [], []];
+    for (let i = 0; i < 700; i++) {
+      const x = (rand() - 0.5) * 30, z = (rand() - 0.5) * 24;
+      if (clearPlantSpot(x, z)) carpet[i % 3].push([x, heightAt(x, z) + 0.035, z]);
+    }
+    const dummy = new Object3D();
+    carpet.forEach((items, k) => {
+      const batch = new InstancedMesh(cube, new MeshStandardMaterial({ color: leafColors[k], roughness: 1 }), items.length);
+      items.forEach(([x, y, z], i) => {
+        dummy.position.set(x, y, z);
+        dummy.rotation.y = rand() * Math.PI;
+        dummy.scale.set(0.15 + rand() * 0.18, 0.025, 0.12 + rand() * 0.16);
+        dummy.updateMatrix();
+        batch.setMatrixAt(i, dummy.matrix);
+      });
+      batch.receiveShadow = true;
+      autumn.add(batch);
+    });
+    emitters.forEach((b) => box2(winter, (b.min.x + b.max.x) / 2, b.max.y + 0.035, (b.min.z + b.max.z) / 2, b.max.x - b.min.x, 0.09, b.max.z - b.min.z, 15398138));
+    const snowman = new Group();
+    const snowSpot = roadsideLamp("southEast");
+    snowman.position.set(...snowSpot);
+    winter.add(snowman);
+    box2(snowman, 0, 0.4, 0, 0.8, 0.8, 0.7, 15791866);
+    box2(snowman, 0, 1, 0, 0.56, 0.5, 0.52, 15791866);
+    box2(snowman, 0, 1.32, 0, 0.75, 0.1, 0.65, 3490388);
+    box2(snowman, 0, 1.5, 0, 0.46, 0.3, 0.43, 3490388);
+    box2(snowman, 0, 0.81, 0, 0.64, 0.12, 0.6, 12075581);
+    box2(snowman, 0.2, 0.65, 0.37, 0.13, 0.35, 0.09, 12075581);
+    for (const x of [-0.14, 0.14]) box2(snowman, x, 1.06, 0.27, 0.07, 0.07, 0.025, 2634307);
+    box2(snowman, 0, 0.97, 0.36, 0.09, 0.09, 0.25, 15108918);
+    for (const y of [0.3, 0.5]) box2(snowman, 0, y, 0.36, 0.07, 0.07, 0.025, 2634307);
+    for (const x of [-0.58, 0.58]) {
+      const arm = box2(snowman, x, 0.64, 0, 0.5, 0.06, 0.06, 7622715);
+      arm.rotation.z = x;
+    }
+    const lanterns = [];
+    for (const [i, name] of ["west", "north", "gardenTurn", "wellPath", "millPath", "southEast"].entries()) {
+      const g = new Group();
+      g.position.set(...roadsideLamp(name));
+      g.rotation.y = i * 0.8;
+      halloween.add(g);
+      box2(g, 0, 0.33, 0, 0.65, 0.56, 0.6, 14117408);
+      box2(g, 0, 0.64, 0, 0.12, 0.15, 0.12, 6382900);
+      for (const x of [-0.16, 0.16]) box2(g, x, 0.42, 0.306, 0.12, 0.12, 0.025, 16764775, true);
+      box2(g, 0, 0.21, 0.307, 0.32, 0.065, 0.025, 16764775, true);
+      box2(g, 0.1, 0.27, 0.307, 0.07, 0.07, 0.025, 16764775, true);
+      const light = new PointLight(16753476, 1.4, 3, 2);
+      light.position.set(0, 0.65, 0.4);
+      g.add(light);
+      lanterns.push(light);
+    }
+    const ghosts = [];
+    for (let i = 0; i < 3; i++) {
+      const g = new Group();
+      g.position.set(-1 + i * 2.1, 3.8 + i * 0.45, 2 + i * 0.8);
+      halloween.add(g);
+      box2(g, 0, 0, 0, 0.5, 0.58, 0.35, 15263222);
+      box2(g, 0, 0.32, 0, 0.36, 0.12, 0.3, 15263222);
+      for (const x of [-0.18, 0, 0.18]) box2(g, x, -0.35, 0, 0.12, 0.18, 0.32, 15263222);
+      for (const x of [-0.12, 0.12]) box2(g, x, 0.08, 0.18, 0.075, 0.1, 0.025, 4339797);
+      ghosts.push({ g, y: g.position.y, phase: i * 2 });
+    }
+    const bats = [];
+    for (let i = 0; i < 5; i++) {
+      const g = new Group();
+      halloween.add(g);
+      box2(g, 0, 0, 0, 0.12, 0.23, 0.14, 3747908);
+      const wings = [];
+      for (const sign2 of [-1, 1]) {
+        const wing = new Group();
+        g.add(wing);
+        box2(wing, sign2 * 0.22, 0.04, 0, 0.38, 0.09, 0.22, 3747908);
+        box2(wing, sign2 * 0.35, -0.02, 0.06, 0.18, 0.08, 0.12, 3747908);
+        wings.push(wing);
+      }
+      bats.push({ g, wings, phase: i * 1.7 });
+    }
+    function particleMap(snow2) {
+      const c = document.createElement("canvas");
+      c.width = c.height = 8;
+      const ctx = c.getContext("2d");
+      ctx.fillStyle = snow2 ? "#eff8ff" : "#edaa43";
+      ctx.fillRect(3, 0, 2, 8);
+      ctx.fillRect(0, 3, 8, 2);
+      if (!snow2) {
+        ctx.fillStyle = "#c45c31";
+        ctx.fillRect(1, 2, 5, 4);
+      }
+      const t = new CanvasTexture(c);
+      t.magFilter = t.minFilter = NearestFilter;
+      t.generateMipmaps = false;
+      return t;
+    }
+    function pool(name, count, snow2) {
+      const positions = new Float32Array(count * 3);
+      function reset(i, spread) {
+        const b = emitters[i % emitters.length];
+        const x = snow2 ? (rand() - 0.5) * 32 : b ? MathUtils.lerp(b.min.x, b.max.x, rand()) : 0, z = snow2 ? (rand() - 0.5) * 26 : b ? MathUtils.lerp(b.min.z, b.max.z, rand()) : 0;
+        const top = snow2 ? 13 : b?.max.y || 8;
+        positions.set([x, spread ? heightAt(x, z) + rand() * Math.max(0, top - heightAt(x, z)) : top, z], i * 3);
+      }
+      for (let i = 0; i < count; i++) reset(i, true);
+      const geo = new BufferGeometry();
+      geo.setAttribute("position", new BufferAttribute(positions, 3));
+      const points = new Points(geo, new PointsMaterial({ map: particleMap(snow2), size: snow2 ? 0.17 : 0.32, alphaTest: 0.5 }));
+      points.name = name;
+      points.frustumCulled = false;
+      island2.add(points);
+      return { points, positions, count, reset, snow: snow2 };
+    }
+    const leaves = pool("autumn-falling-leaves", 130, false), snow = pool("winter-soft-snowfall", 300, true);
+    let elapsed = 0;
+    function apply(season, festive) {
+      autumn.visible = leaves.points.visible = season === "autumn";
+      winter.visible = snow.points.visible = season === "winter";
+      halloween.visible = festive;
+    }
+    function update(dt) {
+      if (dt <= 0) return;
+      elapsed += dt;
+      for (const p of [leaves, snow]) {
+        if (!p.points.visible) continue;
+        for (let i = 0; i < p.count; i++) {
+          const j = i * 3;
+          p.positions[j] += Math.sin(elapsed * 0.6 + i) * dt * 0.13;
+          p.positions[j + 1] -= dt * (p.snow ? 0.48 : 0.34);
+          p.positions[j + 2] += dt * 0.04;
+          if (p.positions[j + 1] < heightAt(p.positions[j], p.positions[j + 2]) + 0.05) p.reset(i, false);
+        }
+        p.points.geometry.attributes.position.needsUpdate = true;
+      }
+      if (halloween.visible) {
+        ghosts.forEach(({ g, y, phase }) => {
+          g.position.y = y + Math.sin(elapsed * 1.3 + phase) * 0.25;
+          g.rotation.y = Math.sin(elapsed * 0.4 + phase) * 0.45;
+        });
+        bats.forEach(({ g, wings, phase }) => {
+          const a = elapsed * 0.35 + phase;
+          g.position.set(Math.cos(a) * 4, 6 + Math.sin(a * 2) * 0.5, -2 + Math.sin(a) * 2);
+          g.rotation.y = -a;
+          wings.forEach((w, i) => w.rotation.z = Math.sin(elapsed * 9 + phase) * 0.55 * (i ? 1 : -1));
+        });
+        lanterns.forEach((l, i) => l.intensity = 1.3 + Math.sin(elapsed * 3 + i) * 0.15);
+      }
+    }
+    return { apply, update };
+  }
+
   // dist/island-seasons.js
   function createSeasons({ island: island2, maps: maps2, meshes: meshes2, plants: plants2, meadow }) {
-    const state = { current: "summer", auto: false, age: 0 }, duration = 1440;
+    const state = { current: "summer", auto: false, age: 0, halloween: false }, duration = 1440;
     let textured = true;
     const grassCanvas = document.createElement("canvas");
     grassCanvas.width = maps2.grass_block_top.image.width;
@@ -31965,62 +32258,101 @@ void main() {
       particles[i] = { speed: 0.26 + random() * 0.22, phase: random() * Math.PI * 2 };
     }
     for (let i = 0; i < count; i++) reset(i, true);
+    const scenes = createSeasonScenes(island2, emitters);
+    function recolor(source, rgb) {
+      const c = document.createElement("canvas");
+      c.width = source.image.width;
+      c.height = source.image.height;
+      const ctx2 = c.getContext("2d");
+      ctx2.drawImage(source.image, 0, 0);
+      const data = ctx2.getImageData(0, 0, c.width, c.height);
+      for (let i = 0; i < data.data.length; i += 4) {
+        const l = (data.data[i] * 0.2126 + data.data[i + 1] * 0.7152 + data.data[i + 2] * 0.0722) / 255;
+        for (let k = 0; k < 3; k++) data.data[i + k] = rgb[k] * Math.min(1, l + 0.2);
+      }
+      ctx2.putImageData(data, 0, 0);
+      const t = new CanvasTexture(c);
+      t.colorSpace = SRGBColorSpace;
+      t.magFilter = NearestFilter;
+      t.wrapS = t.wrapT = RepeatWrapping;
+      t.anisotropy = source.anisotropy;
+      return t;
+    }
+    const autumnLeaves = recolor(maps2.oak_leaves, [255, 160, 57]), winterLeaves = recolor(maps2.oak_leaves, [217, 235, 243]);
+    const autumnGrass = recolor(maps2.grass_block_top, [218, 185, 110]), winterGrass = recolor(maps2.grass_block_top, [245, 250, 255]);
+    const order = ["spring", "summer", "autumn", "winter"];
     const controls = document.createElement("div");
     controls.style.cssText = "display:flex;align-items:center;gap:6px;margin-top:9px;flex-wrap:wrap";
     const label = document.createElement("span");
     label.textContent = "\u5B63\u8282";
     label.style.fontSize = "11px";
-    const springButton = document.createElement("button"), summerButton = document.createElement("button"), autoButton = document.createElement("button");
-    springButton.id = "season-spring";
-    springButton.textContent = "\u6625 \xB7 \u6A31\u82B1";
-    summerButton.id = "season-summer";
-    summerButton.textContent = "\u590F \xB7 \u7EFF\u836B";
+    controls.append(label);
+    const buttons = {};
+    for (const [i, name] of order.entries()) {
+      const b = document.createElement("button");
+      b.id = "season-" + name;
+      b.textContent = ["\u6625 \xB7 \u6A31\u82B1", "\u590F \xB7 \u7EFF\u836B", "\u79CB \xB7 \u91D1\u53F6", "\u51AC \xB7 \u521D\u96EA"][i];
+      b.onclick = () => setSeason(name);
+      buttons[name] = b;
+      controls.append(b);
+    }
+    const autoButton = document.createElement("button"), festivalButton = document.createElement("button");
     autoButton.id = "season-auto";
-    controls.append(label, springButton, summerButton, autoButton);
+    festivalButton.id = "season-halloween";
+    controls.append(autoButton, festivalButton);
     document.querySelector(".life-controls").append(controls);
     const note = document.createElement("small");
-    note.textContent = "\u5F53\u524D\u5F00\u653E\u6625\u3001\u590F \xB7 \u81EA\u52A8\u66F4\u66FF\u65F6\u6BCF\u5B63 3 \u4E2A\u5C0F\u5C9B\u65E5";
+    note.textContent = "\u56DB\u5B63\u81EA\u52A8\u66F4\u66FF\uFF1A\u6BCF\u5B63 3 \u4E2A\u5C0F\u5C9B\u65E5 \xB7 \u4E07\u5723\u8282\u53EF\u4E0E\u4EFB\u610F\u5B63\u8282\u642D\u914D";
     controls.after(note);
     function apply(value = textured) {
       textured = value;
-      const isSpring = state.current === "spring";
+      const isSpring = state.current === "spring", isAutumn = state.current === "autumn", isWinter = state.current === "winter";
       for (const item of leaves) {
         const { mesh, mat, map, color, plain } = item;
-        mat.map = isSpring ? maps2.cherry_leaves : map;
-        mat.color.copy(isSpring ? new Color(16777215) : color);
+        mat.map = isSpring ? maps2.cherry_leaves : isAutumn ? autumnLeaves : isWinter ? winterLeaves : map;
+        mat.color.copy(state.current !== "summer" ? new Color(16777215) : color);
         mat.needsUpdate = true;
-        mesh.userData.plain.color.copy(isSpring ? new Color(15643852) : plain);
+        mesh.userData.plain.color.copy(isSpring ? new Color(15643852) : isAutumn ? new Color(15114308) : isWinter ? new Color(14281715) : plain);
         for (const depth of [mesh.customDepthMaterial, mesh.customDistanceMaterial]) if (depth) {
           depth.map = mat.map;
           depth.needsUpdate = true;
         }
       }
       for (const { mesh, mat, map, color, plain } of grass) {
-        mat.map = isSpring ? springGrass : map;
-        mat.color.copy(isSpring ? new Color(16777215) : color);
+        mat.map = isSpring ? springGrass : isAutumn ? autumnGrass : isWinter ? winterGrass : map;
+        mat.color.copy(state.current !== "summer" ? new Color(16777215) : color);
         mat.needsUpdate = true;
-        mesh.userData.plain.color.copy(isSpring ? new Color(10937007) : plain);
+        mesh.userData.plain.color.copy(isSpring ? new Color(10937007) : isAutumn ? new Color(13217653) : isWinter ? new Color(15397882) : plain);
       }
-      for (const object of hidden) object.visible = !isSpring && (object.userData.onlyPlain ? !textured : plants2.includes(object) ? textured : summerVisibility.get(object));
+      for (const object of hidden) object.visible = !isSpring && !isWinter && (object.userData.onlyPlain ? !textured : plants2.includes(object) ? textured : summerVisibility.get(object));
       spring.visible = petals.visible = isSpring;
-      springButton.setAttribute("aria-pressed", String(isSpring));
-      summerButton.setAttribute("aria-pressed", String(!isSpring));
-      for (const button of [springButton, summerButton, autoButton]) {
-        const active = button === autoButton ? state.auto : button === springButton ? isSpring : !isSpring;
+      scenes.apply(state.current, state.halloween);
+      for (const [name, button] of Object.entries(buttons)) {
+        const active = state.current === name;
+        button.setAttribute("aria-pressed", String(active));
         button.style.background = active ? "#365947" : "";
         button.style.color = active ? "#ffffff" : "";
       }
+      for (const [button, active] of [[autoButton, state.auto], [festivalButton, state.halloween]]) {
+        button.style.background = active ? "#644276" : "";
+        button.style.color = active ? "#ffffff" : "";
+        button.setAttribute("aria-pressed", String(active));
+      }
+      festivalButton.textContent = state.halloween ? "\u4E07\u5723\u8282\uFF1A\u5F00" : "\u4E07\u5723\u8282\uFF1A\u5173";
       autoButton.setAttribute("aria-pressed", String(state.auto));
       autoButton.textContent = state.auto ? "\u81EA\u52A8\u66F4\u66FF\uFF1A\u5F00" : "\u81EA\u52A8\u66F4\u66FF\uFF1A\u5173";
     }
     function setSeason(name) {
-      if (!["spring", "summer"].includes(name)) return;
+      if (!order.includes(name)) return;
       state.current = name;
       state.age = 0;
       apply();
     }
-    springButton.onclick = () => setSeason("spring");
-    summerButton.onclick = () => setSeason("summer");
+    function setHalloween(value) {
+      state.halloween = Boolean(value);
+      apply();
+    }
+    festivalButton.onclick = () => setHalloween(!state.halloween);
     autoButton.onclick = () => {
       state.auto = !state.auto;
       state.age = 0;
@@ -32032,10 +32364,11 @@ void main() {
         state.age += dt;
         if (state.age >= duration) {
           const remainder = state.age % duration, turns = Math.floor(state.age / duration);
-          if (turns % 2) setSeason(state.current === "spring" ? "summer" : "spring");
+          setSeason(order[(order.indexOf(state.current) + turns) % order.length]);
           state.age = remainder;
         }
       }
+      scenes.update(dt);
       if (state.current !== "spring" || dt <= 0) return;
       elapsed += dt;
       for (let i = 0; i < count; i++) {
@@ -32050,78 +32383,7 @@ void main() {
       geo.attributes.position.needsUpdate = true;
     }
     apply();
-    return { state, setSeason, apply, update, duration, stats: { leafMeshes: leaves.length, grassMeshes: grass.length, clusters: anchors.length, particles: count } };
-  }
-
-  // dist/classic-house.js
-  var houseWidthScale = 1.5;
-  var houseX = (x) => 0.23 + (x - 0.23) * houseWidthScale;
-  function buildClassicHouse({ T, box: box2, material: material2, shell: shell2 }) {
-    const timber = material2("dark_oak_planks"), slate = material2("cobbled_deepslate"), wall = material2("stripped_oak_log");
-    const B = (x, y, z, w, h, d, m = timber) => box2(houseX(x), y, z, w * houseWidthScale, h, d, m, m === slate ? 5330010 : m === wall ? 12163685 : 4797217, shell2);
-    function beam(a, b, s = 0.14) {
-      const start = new T.Vector3(houseX(a[0]), a[1], a[2]), end = new T.Vector3(houseX(b[0]), b[1], b[2]), delta = end.clone().sub(start), mid = start.clone().add(end).multiplyScalar(0.5);
-      const m = box2(...mid.toArray(), s, delta.length(), s, timber, 4797217, shell2);
-      m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), delta.normalize());
-    }
-    for (const y of [0.47, 1.28, 2.87]) {
-      B(-2, y, -4.15, 4.5, 0.17, 0.17);
-      for (const x of [-4.23, 0.23]) B(x, y, -2.35, 0.17, 0.17, 3.7);
-    }
-    for (const x of [-4.16, -2.85, -1.65, 0.16]) B(x, 1.65, -4.15, 0.18, 2.75, 0.18);
-    for (const x of [-4.23, 0.23]) {
-      for (const z of [-4.03, -2.35, -0.61]) B(x, 1.65, z, 0.18, 2.75, 0.18);
-      for (const [a, b] of [[-3.93, -2.45], [-2.25, -0.71]]) {
-        beam([x, 1.38, a], [x, 2.78, b]);
-        beam([x, 2.78, a], [x, 1.38, b]);
-      }
-    }
-    for (const [a, b] of [[-4.05, -2.95], [-2.75, -1.75], [-1.55, 0.05]]) beam([a, 1.38, -4.16], [b, 2.78, -4.16]);
-    for (const x of [-4.16, -1.65, 0.16]) B(x, 1.65, -0.46, 0.18, 2.75, 0.18);
-    B(-2, 2.91, -0.46, 4.5, 0.2, 0.2);
-    B(-2.85, 0.46, -0.46, 2.45, 0.18, 0.18);
-    function gable(cx, cz, width, depth, eave, rise, axis = "z") {
-      const p = (u, y, v) => axis === "z" ? [cx + u, y, cz + v] : [cx + v, y, cz + u];
-      const block = (u, y, v, w, h, d, m) => axis === "z" ? B(...p(u, y, v), w, h, d, m) : B(...p(u, y, v), d, h, w, m);
-      const n = Math.ceil(width / 0.42), step = width / n;
-      for (let i = 0; i < n; i++) {
-        const u = -width / 2 + (i + 0.5) * step, y = eave + rise * (1 - Math.abs(u) / (width / 2));
-        block(u, y, 0, step + 0.012, rise * 2 / n + 0.06, depth, slate);
-        for (const v of [-depth / 2, depth / 2]) block(u, y, v, step + 0.018, rise * 2 / n + 0.09, 0.17, timber);
-      }
-      for (const u of [-width / 2, width / 2]) block(u, eave - 0.03, 0, 0.18, 0.24, depth + 0.16, timber);
-      block(0, eave + rise + 0.02, 0, 0.24, 0.24, depth + 0.18, timber);
-      for (const v of [-depth / 2 + 0.14, depth / 2 - 0.14]) {
-        for (let i = 0; i < n; i++) {
-          const u = -width / 2 + (i + 0.5) * step, h = rise * (1 - Math.abs(u) / (width / 2)) - 0.18;
-          if (h > 0) block(u, eave + h / 2 - 0.1, v, step, h, 0.12, wall);
-        }
-        const face = v + Math.sign(v) * 0.1;
-        beam(p(-width / 2, eave - 0.1, face), p(width / 2, eave - 0.1, face), 0.18);
-        beam(p(0, eave - 0.1, face), p(0, eave + rise - 0.12, face), 0.16);
-        for (const s of [-1, 1]) beam(p(s * (width / 2 - 0.15), eave, face), p(0, eave + rise - 0.12, face), 0.16);
-      }
-    }
-    gable(-2, -2.35, 4.95, 4.05, 3.15, 2.15);
-    gable(-2, -2.1, 2.8, 5.05, 3.3, 1.42, "x");
-    gable(-2.85, -0.48, 2.25, 1.35, 3.18, 1.35);
-    B(-2, 2.79, 0.3, 4.9, 0.16, 1.95, slate);
-    for (const z of [-0.68, 1.28]) B(-2, 2.77, z, 5.05, 0.22, 0.16);
-    for (const x of [-4.46, 0.46]) B(x, 2.77, 0.3, 0.16, 0.22, 1.95);
-    B(-2, 2.58, 1.05, 4.45, 0.23, 0.22);
-    for (const x of [-4.1, 0.1]) {
-      B(x, 1.47, 1.05, 0.23, 2.4, 0.23);
-      beam([x, 2.02, 1.05], [x + (x < 0 ? 0.48 : -0.48), 2.55, 1.05], 0.17);
-      beam([x, 2.02, 1.05], [x, 2.62, 0.43], 0.17);
-      B(x, 2.57, 0.23, 0.18, 0.2, 1.8);
-    }
-    const leaves = material2("oak_leaves", 7969616, true);
-    for (const [x, z, w, d] of [[-3.9, -3.95, 0.46, 0.5], [-3.64, -3.7, 0.42, 0.42], [-0.45, -0.85, 0.46, 0.5], [-0.7, -1, 0.35, 0.36], [-2.5, -4.05, 0.36, 0.4]]) {
-      const n = Math.ceil(4.95 / 0.42), step = 4.95 / n, u = Math.floor((x + 2 + 4.95 / 2) / step) * step - 4.95 / 2 + step / 2;
-      const top = 3.15 + 2.15 * (1 - Math.abs(u) / (4.95 / 2)) + (2.15 * 2 / n + 0.06) / 2;
-      box2(houseX(x), top + 0.12, z, w, 0.26, d, leaves, 7969616, shell2);
-    }
-    for (const [x, z] of [[-4.05, 0.8], [-3.72, 0.86]]) box2(houseX(x), 2.98, z, 0.38, 0.24, 0.42, leaves, 7969616, shell2);
+    return { state, setSeason, setHalloween, apply, update, duration, stats: { leafMeshes: leaves.length, grassMeshes: grass.length, clusters: anchors.length, particles: count } };
   }
 
   // dist/plant-wind.js
@@ -32218,58 +32480,6 @@ void main() {
     }
     if (properties.viewlocked) next.locked = properties.viewlocked.value === true;
     return next;
-  }
-
-  // dist/classic-props.js
-  var homeItemShift = { chimney: -0.8, table: -1, bed: -1 };
-  var propShifts = { home: [0, 0, -0.5], garden: [-1, 0, 0], fire: [1, 0, 0] };
-  function propOffset(name) {
-    return zones[name].offset.map((v, i) => v + (propShifts[name]?.[i] || 0));
-  }
-  var residentNodes = Object.fromEntries(Object.entries(classicNodes).map(([name, p]) => [name, p.map((v, i) => v + (indoorNodes.has(name) ? propShifts.home[i] : 0))]));
-  residentNodes.eat[0] += homeItemShift.table;
-  for (const name of ["bedPath", "bedFoot", "sleep"]) residentNodes[name][0] += homeItemShift.bed;
-  for (const [name, x, z] of [["fire", 0, 5.7], ["gardenGate", -10.1, 2], ["garden", -12, 2]]) residentNodes[name] = [x, heightAt(x, z) + 0.07, z];
-  var residentEdges = edges.map(([a, b]) => [a === "garden" ? "gardenGate" : a, b === "garden" ? "gardenGate" : b]).concat([["gardenGate", "garden"]]);
-  function findResidentRoute(from, to) {
-    const queue = [from], previous = /* @__PURE__ */ new Map([[from, null]]);
-    for (let i = 0; i < queue.length; i++) {
-      const at = queue[i];
-      if (at === to) break;
-      for (const [a, b] of residentEdges) {
-        const next = a === at ? b : b === at ? a : null;
-        if (next && !previous.has(next)) {
-          previous.set(next, at);
-          queue.push(next);
-        }
-      }
-    }
-    if (!previous.has(to)) throw Error("No resident route");
-    const path = [];
-    for (let at = to; at !== from; at = previous.get(at)) path.unshift(at);
-    return path;
-  }
-  var insideMovedHouse = (p) => insideHouse({ x: 0.23 + (p.x - propOffset("home")[0] - 0.23) / houseWidthScale + zones.home.offset[0], z: p.z - propShifts.home[2] });
-  function overlapsRoad(x, z, w, d) {
-    const a = x - w / 2, b = x + w / 2, c = z - d / 2, e = z + d / 2;
-    for (let i = Math.floor(a / cellSize); i <= Math.floor(b / cellSize); i++) for (let j = Math.floor((c - 0.3) / cellSize); j <= Math.floor((e - 0.3) / cellSize); j++) {
-      const px2 = (i + 0.5) * cellSize, pz2 = (j + 0.5) * cellSize + 0.3;
-      if (px2 + cellSize / 2 > a + 1e-6 && px2 - cellSize / 2 < b - 1e-6 && pz2 + cellSize / 2 > c + 1e-6 && pz2 - cellSize / 2 < e - 1e-6 && isRoad(px2, pz2)) return true;
-    }
-    return false;
-  }
-  function roadsideLamp(name) {
-    const [nx, , nz] = classicNodes[name], x = nx - 0.8, z = nz;
-    for (let r = 0; r <= 3; r += 0.25) for (let n = 0; n < (r ? 16 : 1); n++) {
-      const a = n * Math.PI / 8, px2 = x + Math.cos(a) * r, pz2 = z + Math.sin(a) * r;
-      if (!inIsland(px2, pz2, 1) || isWater(px2, pz2) || overlapsRoad(px2, pz2, 0.6, 0.6)) continue;
-      if (Object.keys(zones).some((key) => {
-        const [dx, , dz] = propOffset(key), [a2, b, c, d] = zones[key].bounds;
-        return px2 + 0.3 > a2 + dx && px2 - 0.3 < b + dx && pz2 + 0.3 > c + dz && pz2 - 0.3 < d + dz;
-      })) continue;
-      return [px2, heightAt(px2, pz2), pz2];
-    }
-    throw Error("No clear roadside lamp position: " + name);
   }
 
   // dist/island-details.js
