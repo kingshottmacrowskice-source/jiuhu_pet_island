@@ -1,65 +1,71 @@
 {
-  "title": "酒狐 · 云上小日子",
-  "description": "浮空岛、酒狐自在生活与系统时钟。Debug 开关显示调试界面。",
-  "type": "web",
-  "file": "wallpaper.html",
-  "preview": "preview.png",
-  "contentrating": "Everyone",
-  "general": {
-    "properties": {
-      "debug": {
-        "text": "Debug 模式 · 显示控制面板",
-        "type": "bool",
-        "value": true,
-        "order": 0,
-        "index": 0
-      },
-      "viewangle": {
-        "text": "默认视角 · 水平角度",
-        "type": "slider",
-        "value": 24.064,
-        "min": -180,
-        "max": 180,
-        "fraction": true,
-        "order": 1,
-        "index": 1
-      },
-      "viewtilt": {
-        "text": "默认视角 · 俯仰角度",
-        "type": "slider",
-        "value": 33.805,
-        "min": 5,
-        "max": 75,
-        "fraction": true,
-        "order": 2,
-        "index": 2
-      },
-      "zoom": {
-        "text": "缩放程度（%）",
-        "type": "slider",
-        "value": 100,
-        "min": 80,
-        "max": 250,
-        "fraction": true,
-        "order": 4,
-        "index": 4
-      },
-      "viewlocked": {
-        "text": "锁定视角（禁止拖动、滚轮与镜头跟随）",
-        "type": "bool",
-        "value": false,
-        "order": 3,
-        "index": 3
-      }
-    }
-  },
-  "preview" : "preview.png",
-  "ratingsex" : "none",
-  "ratingviolence" : "none",
-  "tags" : [ "Pixel art" ],
-  "title" : "酒狐 · 云上小日子",
-  "type" : "web",
-  "version" : 1,
-  "workshopid" : "3819544205",
-  "workshopurl" : "steam://url/CommunityFilePage/3819544205"
+    "title":  "酒狐 · 云上小日子",
+    "description":  "浮空岛、酒狐自在生活与系统时钟。Debug 开关显示调试界面。",
+    "type":  "web",
+    "file":  "wallpaper.html",
+    "preview":  "preview.png",
+    "contentrating":  "Everyone",
+    "general":  {
+                    "properties":  {
+                                       "debug":  {
+                                                     "text":  "Debug 模式 · 显示控制面板",
+                                                     "type":  "bool",
+                                                     "value":  true,
+                                                     "order":  0,
+                                                     "index":  0
+                                                 },
+                                       "viewangle":  {
+                                                         "text":  "默认视角 · 水平角度",
+                                                         "type":  "slider",
+                                                         "value":  24.064,
+                                                         "min":  -180,
+                                                         "max":  180,
+                                                         "fraction":  true,
+                                                         "order":  1,
+                                                         "index":  1
+                                                     },
+                                       "viewtilt":  {
+                                                        "text":  "默认视角 · 俯仰角度",
+                                                        "type":  "slider",
+                                                        "value":  33.805,
+                                                        "min":  5,
+                                                        "max":  75,
+                                                        "fraction":  true,
+                                                        "order":  2,
+                                                        "index":  2
+                                                    },
+                                       "zoom":  {
+                                                    "text":  "缩放程度（%）",
+                                                    "type":  "slider",
+                                                    "value":  100,
+                                                    "min":  80,
+                                                    "max":  250,
+                                                    "fraction":  true,
+                                                    "order":  4,
+                                                    "index":  4
+                                                },
+                                       "viewlocked":  {
+                                                          "text":  "锁定视角（禁止拖动、滚轮与镜头跟随）",
+                                                          "type":  "bool",
+                                                          "value":  false,
+                                                          "order":  3,
+                                                          "index":  3
+                                                      },
+                                       "realtime":  {
+                                                        "text":  "真实时间（同步昼夜、四季和节日）",
+                                                        "type":  "bool",
+                                                        "value":  false,
+                                                        "order":  5,
+                                                        "index":  5
+                                                    }
+                                   }
+                },
+    "ratingsex":  "none",
+    "ratingviolence":  "none",
+    "tags":  [
+                 "Pixel art"
+             ],
+    "version":  1,
+    "workshopid":  "3819544205",
+    "workshopurl":  "steam://url/CommunityFilePage/3819544205"
 }

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {realCalendar,createRealTime} from './dist/real-time.js';
+for(const [month,season]of [[1,'winter'],[3,'spring'],[6,'summer'],[9,'autumn'],[12,'winter']])assert.equal(realCalendar(new Date(2026,month-1,1)).season,season);
+assert.equal(realCalendar(new Date(2026,9,31)).halloween,true);
+assert.equal(realCalendar(new Date(2026,10,1)).halloween,false);
+assert.equal(realCalendar(new Date(2026,5,1,12,30,30)).hour,12.5+30/3600);
+const controls=new Map();globalThis.document={getElementById:id=>{if(!controls.has(id))controls.set(id,{disabled:false});return controls.get(id);}};
+const life={state:{hour:9,speed:4,paused:true},update(){}};
+const seasons={state:{current:'summer',auto:true,age:123,halloween:true},setSeason(s){this.state.current=s;this.state.age=0;},setHalloween(v){this.state.halloween=v;},apply(){}};
+const original={...seasons.state},clock=createRealTime(life,seasons);
+clock.apply({realtime:{value:true}});
+clock.sync(new Date(2026,9,31,23,59,59));assert.equal(seasons.state.current,'autumn');assert.equal(seasons.state.halloween,true);
+clock.sync(new Date(2026,10,1,0,0,0));assert.equal(life.state.hour,0);assert.equal(seasons.state.halloween,false);
+clock.sync(new Date(2026,11,1));assert.equal(seasons.state.current,'winter');
+assert.equal(life.state.speed,1);assert.equal(life.state.paused,false);assert.ok([...controls.values()].every(c=>c.disabled));
+clock.apply({debug:{value:false}});assert.equal(clock.enabled,true);
+clock.apply({realtime:{value:false}});assert.deepEqual(seasons.state,original);assert.deepEqual(life.state,{hour:9,speed:4,paused:true});assert.ok([...controls.values()].every(c=>!c.disabled));
+console.log('Real time: local calendar, midnight, seasons, Halloween, controls and restoration passed');

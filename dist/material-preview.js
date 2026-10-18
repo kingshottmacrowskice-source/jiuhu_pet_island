@@ -1,4 +1,5 @@
 import {createSeasons} from './island-seasons.js';
+import {createRealTime} from './real-time.js';
 import {buildClassicHouse,houseX,houseWidthScale} from './classic-house.js';
 import * as T from './vendor/three.module.js';
 import {addPlantWind} from './plant-wind.js';
@@ -353,6 +354,8 @@ async function build() {
   const wind=addPlantWind(island);animated.push(t=>wind.update(t));
   seasons=createSeasons({island,maps,meshes,plants,meadow});
   life=createLife({scene,ambient,sun,lamps,weatherBounds:[38,32],rainFloor:(x,z)=>heightAt(x,z)+(insideMovedHouse({x,z})?4.8:x>-12.6&&x<-9.4&&z>-4&&z<-1.35?2.5:.05),onNight:value=>{isNight=value;}});
+  realTime=createRealTime(life,seasons);
+  realTime.apply(window.islandCameraProperties||{});
   resident=await addResident({island,getWorld:()=>life.state,routeNodes:residentNodes,routeFinder:findResidentRoute,groundHeight:walkHeight,insideTest:insideMovedHouse,gazeTargets:{fire:[propOffset('fire')[0],propOffset('fire')[2]+3.45],pond:[6,2.3],garden:[-12,3]},focusOn:(position,place)=>{
     if(wallpaperCamera.locked)return;
     setFollowing(!following);
@@ -384,6 +387,7 @@ document.getElementById('roof').onclick=()=>{
 };
 let yaw=.42,pitch=.59,distance=65;
 let wallpaperCamera={...cameraDefaults};
+let realTime=null;
 const focus=new T.Vector3(0,1.2,0);
 const views={all:[0,1.2,0,65],home:[-4.5,2.6,-2.5,25],garden:[-10,1,4.2,19],river:[9,.4,-1.2,22],mill:[-10,6.8,-8.5,29],lookout:[10,1.8,7,20]};
 function setFollowing(value){if(value&&wallpaperCamera.locked)return;following=value;const button=document.getElementById('resident-focus');button.textContent=value?'停止跟随':'跟随酒狐';button.setAttribute('aria-pressed',String(value));}
@@ -394,6 +398,7 @@ document.getElementById('reset').onclick=()=>{if(!wallpaperCamera.locked)applyDe
 const pointers=new Map();let pinch=0;
 function applyDefaultCamera(){setFollowing(false);focus.set(0,1.2,0);yaw=T.MathUtils.degToRad(wallpaperCamera.yaw);pitch=T.MathUtils.degToRad(wallpaperCamera.pitch);distance=65*100/wallpaperCamera.zoom;document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view==='all')));}
 window.applyIslandCameraProperties=properties=>{
+ realTime?.apply(properties);
  wallpaperCamera=cameraSettings(properties,wallpaperCamera);
  if(properties.viewangle||properties.viewtilt||properties.zoom)applyDefaultCamera();
  if(wallpaperCamera.locked){setFollowing(false);pointers.clear();pinch=0;}
@@ -415,8 +420,8 @@ function render(time=0){
  requestAnimationFrame(render);
  if(window.islandHostPaused){lastFrame=null;return;}
  const realDt=lastFrame===null?0:Math.min(.05,Math.max(0,(time-lastFrame)*.001));lastFrame=time;
- const dt=life.state.paused?0:realDt*life.state.speed;
- life.update(dt);seasons.update(dt);resident.update(dt);shell.visible=!(manualRoof||resident.isInside());
+ const dt=realTime.enabled?realDt:life.state.paused?0:realDt*life.state.speed;
+ life.update(dt);realTime.sync();if(realTime.enabled)life.update(0);seasons.update(dt);resident.update(dt);shell.visible=!(manualRoof||resident.isInside());
  if(following){const p=resident.sprite.position;focus.set(p.x,p.y+.7,p.z);}
  const d=distance*Math.max(1,.98/camera.aspect);camera.position.set(focus.x+Math.sin(yaw)*Math.cos(pitch)*d,focus.y+Math.sin(pitch)*d,focus.z+Math.cos(yaw)*Math.cos(pitch)*d);camera.lookAt(focus);camera.updateMatrixWorld();resident.updateFacing(camera);
  animated.forEach(update=>update(life.state.elapsed));atmosphere.update(life.state);

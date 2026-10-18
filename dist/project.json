@@ -7,6 +7,13 @@
   "contentrating": "Everyone",
   "general": {
     "properties": {
+      "realtime": {
+        "text": "真实时间（同步昼夜、四季和节日）",
+        "type": "bool",
+        "value": false,
+        "order": 5,
+        "index": 5
+      },
       "debug": {
         "text": "Debug 模式 · 显示控制面板",
         "type": "bool",

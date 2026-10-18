@@ -32386,6 +32386,50 @@ void main() {
     return { state, setSeason, setHalloween, apply, update, duration, stats: { leafMeshes: leaves.length, grassMeshes: grass.length, clusters: anchors.length, particles: count } };
   }
 
+  // dist/real-time.js
+  function realCalendar(now2 = /* @__PURE__ */ new Date()) {
+    const month = now2.getMonth() + 1;
+    return {
+      hour: now2.getHours() + now2.getMinutes() / 60 + now2.getSeconds() / 3600 + now2.getMilliseconds() / 36e5,
+      season: month >= 3 && month <= 5 ? "spring" : month >= 6 && month <= 8 ? "summer" : month >= 9 && month <= 11 ? "autumn" : "winter",
+      halloween: month === 10 && now2.getDate() === 31
+    };
+  }
+  function createRealTime(life2, seasons2) {
+    let enabled = false, saved;
+    const controls = ["light", "speed", "pause", "season-spring", "season-summer", "season-autumn", "season-winter", "season-auto", "season-halloween"].map((id) => document.getElementById(id)).filter(Boolean);
+    function sync(now2) {
+      if (!enabled) return;
+      const calendar = realCalendar(now2);
+      life2.state.hour = calendar.hour;
+      if (seasons2.state.current !== calendar.season) seasons2.setSeason(calendar.season);
+      if (seasons2.state.halloween !== calendar.halloween) seasons2.setHalloween(calendar.halloween);
+    }
+    function apply(properties) {
+      if (!properties.realtime) return;
+      const next = properties.realtime.value === true;
+      if (next === enabled) return;
+      enabled = next;
+      if (enabled) {
+        saved = { hour: life2.state.hour, paused: life2.state.paused, speed: life2.state.speed, season: { ...seasons2.state }, disabled: controls.map((c) => c.disabled) };
+        life2.state.paused = false;
+        life2.state.speed = 1;
+        seasons2.state.auto = false;
+        controls.forEach((c) => c.disabled = true);
+        sync();
+      } else {
+        Object.assign(life2.state, { hour: saved.hour, paused: saved.paused, speed: saved.speed });
+        Object.assign(seasons2.state, saved.season);
+        seasons2.apply();
+        controls.forEach((c, i) => c.disabled = saved.disabled[i]);
+      }
+      life2.update(0);
+    }
+    return { apply, sync, get enabled() {
+      return enabled;
+    } };
+  }
+
   // dist/plant-wind.js
   function addPlantWind(island2) {
     const time = { value: 0 };
@@ -34322,6 +34366,8 @@ void main() {
     life = createLife({ scene, ambient, sun, lamps, weatherBounds: [38, 32], rainFloor: (x, z) => heightAt(x, z) + (insideMovedHouse({ x, z }) ? 4.8 : x > -12.6 && x < -9.4 && z > -4 && z < -1.35 ? 2.5 : 0.05), onNight: (value) => {
       isNight = value;
     } });
+    realTime = createRealTime(life, seasons);
+    realTime.apply(window.islandCameraProperties || {});
     resident = await addResident({ island, getWorld: () => life.state, routeNodes: residentNodes, routeFinder: findResidentRoute, groundHeight: walkHeight, insideTest: insideMovedHouse, gazeTargets: { fire: [propOffset("fire")[0], propOffset("fire")[2] + 3.45], pond: [6, 2.3], garden: [-12, 3] }, focusOn: (position, place) => {
       if (wallpaperCamera.locked) return;
       setFollowing(!following);
@@ -34375,6 +34421,7 @@ void main() {
   var pitch = 0.59;
   var distance = 65;
   var wallpaperCamera = { ...cameraDefaults };
+  var realTime = null;
   var focus = new Vector3(0, 1.2, 0);
   var views = { all: [0, 1.2, 0, 65], home: [-4.5, 2.6, -2.5, 25], garden: [-10, 1, 4.2, 19], river: [9, 0.4, -1.2, 22], mill: [-10, 6.8, -8.5, 29], lookout: [10, 1.8, 7, 20] };
   function setFollowing(value) {
@@ -34410,6 +34457,7 @@ void main() {
     document.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === "all")));
   }
   window.applyIslandCameraProperties = (properties) => {
+    realTime?.apply(properties);
     wallpaperCamera = cameraSettings(properties, wallpaperCamera);
     if (properties.viewangle || properties.viewtilt || properties.zoom) applyDefaultCamera();
     if (wallpaperCamera.locked) {
@@ -34466,8 +34514,10 @@ void main() {
     }
     const realDt = lastFrame === null ? 0 : Math.min(0.05, Math.max(0, (time - lastFrame) * 1e-3));
     lastFrame = time;
-    const dt = life.state.paused ? 0 : realDt * life.state.speed;
+    const dt = realTime.enabled ? realDt : life.state.paused ? 0 : realDt * life.state.speed;
     life.update(dt);
+    realTime.sync();
+    if (realTime.enabled) life.update(0);
     seasons.update(dt);
     resident.update(dt);
     shell.visible = !(manualRoof || resident.isInside());
